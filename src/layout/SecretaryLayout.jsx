@@ -1,14 +1,15 @@
-// src/layout/SecretaryLayout.jsx
-import React, { useState } from 'react';
+// SecretaryLayout.jsx
+import React from 'react';
 import {
+    DashboardFilled,
     FileTextOutlined,
     PlusCircleOutlined,
 } from '@ant-design/icons';
-import { Breadcrumb, Layout, Menu, theme, Typography } from 'antd';
+import { Breadcrumb, Layout, Menu, theme } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
+import logo from '../assets/kabu-logo-Beveled-shadow.png';
 
-const { Header, Content, Footer, Sider } = Layout;
-const { Title } = Typography;
+const { Header, Content, Footer } = Layout;
 
 function getItem(label, key, icon, children) {
     return {
@@ -20,50 +21,78 @@ function getItem(label, key, icon, children) {
 }
 
 const SecretaryLayout = ({ children }) => {
-    const [collapsed, setCollapsed] = useState(false);
     const {
         token: { colorBgContainer, borderRadiusLG },
     } = theme.useToken();
     const location = useLocation();
 
     const items = [
-        getItem('Campaign Requests', '/secretary/campaign-requests', <FileTextOutlined />),
-        getItem('Create Campaign', '/secretary/create-campaign', <PlusCircleOutlined />),
+        getItem(<Link to="/secretary/dashboard">Dashboard</Link>, "/secretary/dashboard", <DashboardFilled />),
+        getItem(<Link to="/secretary/campaign-requests">Campaign Requests</Link>, '/secretary/campaign-requests', <PlusCircleOutlined />),
+        getItem(<Link to="/secretary/campaign-management">Campaign Management</Link>, '/secretary/campaign-management', <PlusCircleOutlined />),
+        getItem(<Link to="/secretary/reports">Reports </Link>, '/secretary/Reports', <FileTextOutlined />),
     ];
 
     const getSelectedKeys = () => {
         const path = location.pathname;
-        if (path === '/secretary/campaign-requests') return ['/secretary/campaign-requests'];
-        if (path === '/secretary/create-campaign') return ['/secretary/create-campaign'];
-        return [];
+        return [path];
     };
 
     return (
         <Layout
             style={{
                 minHeight: '100vh',
+                background: 'linear-gradient(to bottom, #F8E8EC 70%, #d9f7be)',
             }}
         >
-            <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
-                <div className="demo-logo-vertical" />
-                <Menu theme="dark" selectedKeys={getSelectedKeys()} mode="inline" items={items} />
-            </Sider>
-            <Layout>
-                <Header
+            <Header
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'maroon',
+                }}
+            >
+                <img
+                    src={logo}
+                    alt="Kabarak University Logo"
                     style={{
-                        padding: '0 24px',
-                        background: colorBgContainer,
-                        display: 'flex',
-                        alignItems: 'center',
+                    height: '60px',  // Adjust the height as needed
+                    marginRight: '0 auto', // Add some spacing to the right of the logo
                     }}
-                >
-                    <Title level={3} style={{ color: 'black', margin: 0 }}>Secretary Portal</Title>
-                </Header>
+                 />
+                <Menu
+                    theme="dark"
+                    mode="horizontal"
+                    selectedKeys={getSelectedKeys()}
+                    items={items}
+                    style={{
+                        flex: 1,
+                        minWidth: 0,
+                        background: 'maroon',
+                    }}
+                />
+            </Header>
+            <Layout>
                 <Content
                     style={{
-                        margin: '0 16px',
+                        padding: '0 20px',
+                        minHeight: '100vh',
+                        background: 'linear-gradient(to bottom, #F8E8EC 70%, #d9f7be)',
+                        display: 'flex',
+                        flexDirection: 'column',
                     }}
                 >
+                    <div style={{
+                        color: 'maroon',
+                        padding: '10px',
+                        textAlign: 'left',
+                        fontWeight: 'bold',
+                        fontSize: '1.4rem',
+                        marginBottom: '10px',
+                        marginLeft: '24px'
+                    }}>
+                        Kabarak Student Welfare Secretary Portal.
+                    </div>
                     <Breadcrumb
                         style={{
                             margin: '16px 0',
@@ -86,9 +115,11 @@ const SecretaryLayout = ({ children }) => {
                 <Footer
                     style={{
                         textAlign: 'center',
+                        fontSize: '1.3em',
+                        backgroundColor: '#92c282',
                     }}
                 >
-                    Secretary Panel ©{new Date().getFullYear()} Created by Your Team
+                    KABU Student Welfare Management System ©2025 Team Project.
                 </Footer>
             </Layout>
         </Layout>

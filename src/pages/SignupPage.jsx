@@ -1,102 +1,171 @@
-// src/pages/SignupPage.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Layout, Button, Typography, Form, Input, message } from 'antd';
+import { Link, useNavigate } from 'react-router-dom';
+import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 
-function SignupPage() {
+const { Header, Content, Footer } = Layout;
+const { Title } = Typography;
+
+const SignupPage = () => {
+    const navigate = useNavigate();
+    const [form] = Form.useForm(); // Form instance
+
+    const onFinish = async (values) => {
+        // Simulate API signup (replace with your actual API endpoint)
+        const response = await simulateSignup(values);
+
+        if (response.success) {
+            message.success('Signup successful! Please login.');
+            navigate('/login');
+        } else {
+            message.error(response.message || 'Signup failed. Please try again.');
+        }
+    };
+
+    const simulateSignup = async (values) => {
+        // Basic email validation
+        const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+        if (!emailRegex.test(values.email)) {
+            return { success: false, message: 'Invalid email format.' };
+        }
+
+        if (values.password.length < 6) {
+            return { success: false, message: 'Password must be at least 6 characters long.' };
+        }
+        // Replace with your actual API call
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                // Simple email domain check (replace with your actual allowed domain)
+                if (!values.email.endsWith('@yourstudentsdomain.com')) {
+                    resolve({ success: false, message: 'Please use your university email address.' });
+                    return;
+                }
+                // Mock signup data (replace with data from your database)
+                // This is just a placeholder.
+                resolve({ success: true });
+            }, 1000); // Simulate network latency
+        });
+    };
+
     return (
-        <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-                <img
-                    className="mx-auto size-10"
-                    src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"  // Replace with your logo
-                    alt="Your Company"
-                />
-                <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-                    Create a new account
-                </h2>
-            </div>
+        <Layout
+            style={{
+                background: 'linear-gradient(to bottom, #F8E8EC 70%, #d9f7be)',
+                minHeight: '100vh',
+            }}
+        >
+            <Header
+                style={{
+                    background: 'maroon',
+                    color: 'white',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0 50px',
+                    height: '80px',
+                }}
+            >
+                <Title level={3} style={{ color: 'white', margin: 0 }}>
+                    Kabarak Student Welfare Management System
+                </Title>
+                 <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
+                    <Link to="/">Back to Home</Link>
+                </Button>
+            </Header>
 
-            <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                <form className="space-y-6" action="#" method="POST">
-                    <div>
-                        <label htmlFor="firstName" className="block text-sm/6 font-semibold leading-6 text-gray-900">
-                            First Name
-                        </label>
-                        <div className="mt-2.5">
-                            <input
-                                id="firstName"
-                                name="firstName"
-                                type="text"
-                                required
-                                className="block w-full rounded-md border-0 py-2 px-3.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6 sm:leading-6"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="lastName" className="block text-sm/6 font-semibold leading-6 text-gray-900">
-                            Last Name
-                        </label>
-                        <div className="mt-2.5">
-                            <input
-                                id="lastName"
-                                name="lastName"
-                                type="text"
-                                required
-                                className="block w-full rounded-md border-0 py-2 px-3.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6 sm:leading-6"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="email" className="block text-sm/6 font-semibold leading-6 text-gray-900">
-                            Email address
-                        </label>
-                        <div className="mt-2.5">
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="block w-full rounded-md border-0 py-2 px-3.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6 sm:leading-6"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block text-sm/6 font-semibold leading-6 text-gray-900">
-                            Password
-                        </label>
-                        <div className="mt-2.5">
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                required
-                                className="block w-full rounded-md border-0 py-2 px-3.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6 sm:leading-6"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <button
-                            type="submit"
-                            className="flex w-full justify-center rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            <Content
+                style={{
+                    padding: '50px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+            >
+                <div
+                    style={{
+                        width: '400px', // Adjust the width as needed
+                        padding: '3rem',
+                        borderRadius: 10,
+                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    }}
+                >
+                    <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '1.5rem' }}>
+                        Sign Up
+                    </Title>
+                    <Form
+                        form={form} // Link form instance
+                        name="signup_form"
+                        initialValues={{ remember: true }}
+                        onFinish={onFinish}
+                    >
+                        <Form.Item
+                            name="email"
+                            rules={[
+                                { required: true, message: 'Please enter your email!' },
+                                { type: 'email', message: 'Please enter a valid email!' },
+                            ]}
                         >
-                            Sign up
-                        </button>
-                    </div>
-                </form>
+                            <Input prefix={<MailOutlined />} placeholder="Email" />
+                        </Form.Item>
 
-                <p className="mt-10 text-center text-sm text-gray-500">
-                    Already a member?{' '}
-                    <Link to="/login" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
-                        Sign in
-                    </Link>
-                </p>
-            </div>
-        </div>
+                        <Form.Item
+                            name="password"
+                            rules={[{ required: true, message: 'Please enter your password!' }]}
+                        >
+                            <Input
+                                prefix={<LockOutlined />}
+                                type="password"
+                                placeholder="Password"
+                            />
+                        </Form.Item>
+                         <Form.Item
+                            name="confirmPassword"
+                            dependencies={['password']}
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please confirm your password!',
+                                },
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        if (!value || getFieldValue('password') === value) {
+                                            return Promise.resolve();
+                                        }
+                                        return Promise.reject(new Error('The two passwords that you entered do not match!'));
+                                    },
+                                }),
+                            ]}
+                        >
+                            <Input
+                                prefix={<LockOutlined />}
+                                type="password"
+                                placeholder="Confirm Password"
+                            />
+                        </Form.Item>
+
+                        <Form.Item>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                style={{ width: '100%', backgroundColor: 'maroon', borderColor: 'maroon' }}
+                            >
+                                Sign Up
+                            </Button>
+                        </Form.Item>
+                        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                            <Link to="/login">Already a member? Log in</Link>
+                        </div>
+                    </Form>
+                </div>
+            </Content>
+
+            <Footer style={{ textAlign: 'center', backgroundColor: '#b5e487', padding: '24px' }}>
+                KABU Student Welfare Management System ©2025 Team Project
+            </Footer>
+        </Layout>
     );
-}
+};
 
 export default SignupPage;
