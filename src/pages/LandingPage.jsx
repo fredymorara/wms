@@ -55,7 +55,7 @@ const LandingPage = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '0 50px',
+                    padding: '0 20px',
                     height: '80px',
                 }}
             >
@@ -63,72 +63,76 @@ const LandingPage = () => {
                     src={logo}
                     alt="Kabarak University Logo"
                     style={{
-                        height: '60px',  // Adjust the height as needed
-                        marginRight: '0 auto', // Add some spacing to the right of the logo
+                        height: '60px',
                     }}
                 />
-                <Title level={2} style={{ color: 'white', margin: '0', marginLeft: '1rem auto' }}>
-                    Kabarak Student Welfare
+                <Title
+                    level={4}
+                    className="text-white mx-auto text-center flex-1"
+                >
+                    <span className="hidden sm:inline text-white text-xl md:text-2xl lg:text-3xl">Kabarak Student Welfare Management System</span>
+                    <span className="sm:hidden text-white text-white text-lg md:text-xl">KABU Student Welfare</span>
                 </Title>
-                <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
-                    <Link to="/login">Log In</Link>
-                </Button>
+                <div className="ml-4">
+                    <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
+                        <Link to="/login">Log In</Link>
+                    </Button>
+                </div>
             </Header>
 
-            <Content style={{ padding: '50px' }}>
-                {/* Centered Hero Section */}
+            <Content style={{ padding: '20px' }}>
                 <div
                     style={{
-                        padding: '4rem',
+                        padding: '3rem', // Increased padding for more space
                         borderRadius: 10,
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         textAlign: 'center',
                         maxWidth: '800px',
-                        margin: '0 auto',
+                        margin: '2rem auto', // Added margin for spacing
                         backgroundColor: 'rgba(255, 255, 255, 0.6)',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                     }}
                 >
-                    <Title level={1} style={{ color: 'maroon', marginBottom: '1.5rem' }}>
+                    <Title level={2} style={{ color: 'maroon', marginBottom: '1rem' }}>
                         Support. Connect. Thrive.
                     </Title>
-                    <Paragraph style={{ fontSize: '1.2rem', color: 'green', marginBottom: '2.5rem' }}>
+                    <Paragraph style={{ fontSize: '1rem', marginBottom: '1.5rem' }}>
                         A student-run platform dedicated to fostering a supportive community, providing financial
                         assistance, and promoting student well-being.
                     </Paragraph>
                     <Button
                         type="primary"
                         style={{
-                            backgroundColor: 'maroon',
+                            backgroundColor: '#b5e487',
+                            color: 'black',
                             borderColor: 'maroon',
-                            padding: '0.75rem 1.5rem',
-                            fontSize: '1.1rem',
+                            padding: '0.5rem 1rem',
+                            fontSize: '1rem',
                         }}
                     >
                         <Link to="/signup">Get Started</Link>
                     </Button>
                 </div>
 
-                {/* Key Features Section */}
-                <div style={{ marginTop: '80px', padding: '0 20px' }}> {/* Explicit Unit */}
-                    <Title level={2} style={{ color: 'green', textAlign: 'center', marginBottom: '3rem' }}>
+                <div style={{ marginTop: '4rem', padding: '0 10px' }}> {/* Increased marginTop */}
+                    <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '2rem' }}>
                         Key Features
                     </Title>
-                    <Row gutter={[24, 24]} justify="center" style={{ maxWidth: '1200px', margin: '0 auto', alignItems: 'stretch' }}>
+                    <Row gutter={[16, 16]} justify="center" style={{ maxWidth: '1200px', margin: '0 auto', alignItems: 'stretch' }}>
                         {featureData.map((feature) => (
-                            <Col key={feature.key} xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', }}>
+                            <Col key={feature.key} xs={24} sm={12} md={8} lg={6} style={{ display: 'flex' }}>
                                 <Card
                                     title={
-                                        <div style={{ display: 'flex',paddingTop: '1.3rem', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', textAlign: 'center' }}>
+                                        <div style={{ display: 'flex', paddingTop: '1.3rem', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', textAlign: 'center' }}>
                                             {feature.icon}
                                             <span style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>{feature.title}</span>
                                         </div>
                                     }
-                                    bordered={true}
+                                    variant="outlined"
                                     style={{ flex: 1, borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)' }}
-                                    bodyStyle={{ textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2rem' }}
+                                    styles={{ body: { textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2rem' } }}
                                 >
                                     <Paragraph style={{ color: '#555', textAlign: 'center' }}>{feature.description}</Paragraph>
                                 </Card>
@@ -137,33 +141,31 @@ const LandingPage = () => {
                     </Row>
                 </div>
 
-                {/* Call to Action Section */}
                 <div
                     style={{
-                        margin: '0 auto',
-                        marginTop: '120px',	
-                        padding: '4rem',
+                        margin: '4rem auto', // Increased margin
+                        padding: '3rem', // Increased padding
                         backgroundColor: 'rgba(0, 0, 0, 0.7)',
                         borderRadius: 12,
                         textAlign: 'center',
                         color: 'white',
                         maxWidth: '900px',
-                        
                         boxShadow: '0 6px 18px rgba(0, 0, 0, 0.25)',
                     }}
                 >
-                    <Title level={2} style={{ color: 'white' }}>Make a Difference Today</Title>
-                    <Paragraph style={{ fontSize: '1.4rem', color: 'lightgreen', marginBottom: '2rem' }}>
+                    <Title level={3} style={{ color: 'white' }}>Make a Difference Today</Title>
+                    <Paragraph style={{ fontSize: '1.1rem', color: 'white', marginBottom: '1.5rem' }}>
                         Join our community and support fellow students in need. Every contribution makes a difference in
                         building a supportive and thriving environment for all.
                     </Paragraph>
                     <Button
                         type="primary"
                         style={{
-                            backgroundColor: 'maroon',
+                            backgroundColor: '#b5e487',
+                            color: 'black',
                             borderColor: 'maroon',
-                            padding: '0.75rem 1.5rem',
-                            fontSize: '1.1rem',
+                            padding: '0.5rem 1rem',
+                            fontSize: '1rem',
                         }}
                     >
                         <Link to="/signup">Get Started</Link>

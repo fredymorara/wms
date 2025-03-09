@@ -32,35 +32,35 @@ import MemberLayout from './layout/MemberLayout.jsx'; // Import MemberLayout
 import SecretaryLayout from './layout/SecretaryLayout.jsx'; // Import SecretaryLayout
 import TreasurerLayout from './layout/TreasurerLayout.jsx'; // Import TreasurerLayout
 function App() {
-    return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-              {/*Member Section */}
-                <Route path="/member/dashboard" element={<MemberLayout><MemberDashboardPage /></MemberLayout>} />
-                <Route path="/member/history" element={<MemberLayout><ContributionHistoryPage /></MemberLayout>} />
-                <Route path="/member/profile" element={<MemberLayout><ProfileSettingsPage /></MemberLayout>} />
-                <Route path="/member/campaigns" element={<MemberLayout><CampaignsPage /></MemberLayout>} />
-                <Route path="/member/help" element={<MemberLayout><HelpPage /></MemberLayout>} />
-                {/*Admin Section */}
-                <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-                <Route path="/admin/user-management" element={<AdminLayout><UserManagementPage /></AdminLayout>} />
-                <Route path="/admin/campaign-approval" element={<AdminLayout><CampaignApprovalPage /></AdminLayout>} />
-                <Route path="/admin/fund-management" element={<AdminLayout><FundManagementPage /></AdminLayout>} />
-                {/*Treasurer Section */}
-                <Route path='/treasurer/dashboard' element={<TreasurerLayout><TreasurerDashboardPage /></TreasurerLayout>} />
-                <Route path='/treasurer/transactions' element={<TreasurerLayout><TransactionManagementPage /></TreasurerLayout>} />
-                <Route path='/treasurer/disbursement-management' element={<TreasurerLayout><DisbursementManagementPage /></TreasurerLayout>} />
-              {/*Secretary Section */}
-                <Route path="/secretary/dashboard" element={<SecretaryLayout><SecretaryDashboardPage /></SecretaryLayout>} />
-                <Route path="/secretary/campaign-management" element={<SecretaryLayout><CampaignManagementPage /></SecretaryLayout>} />
-                <Route path="/secretary/campaign-requests" element={<SecretaryLayout><CampaignRequestsPage /></SecretaryLayout>} />
-                <Route path="/secretary/reports" element={<SecretaryLayout><ReportsAndDocumentationPage /></SecretaryLayout>} />
-                <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-        </Router>
-    );
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        {/*Member Section */}
+        <Route path="/member/dashboard" element={<MemberDashboardPage />} />
+        <Route path="/member/history" element={<ContributionHistoryPage />} />
+        <Route path="/member/profile" element={<ProfileSettingsPage />} />
+        <Route path="/member/campaigns" element={<CampaignsPage />} />
+        <Route path="/member/help" element={<HelpPage />} />
+        {/*Admin Section */}
+        <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+        <Route path="/admin/user-management" element={<AdminLayout><UserManagementPage /></AdminLayout>} />
+        <Route path="/admin/campaign-approval" element={<AdminLayout><CampaignApprovalPage /></AdminLayout>} />
+        <Route path="/admin/fund-management" element={<AdminLayout><FundManagementPage /></AdminLayout>} />
+        {/*Treasurer Section */}
+        <Route path='/treasurer/dashboard' element={<TreasurerLayout><TreasurerDashboardPage /></TreasurerLayout>} />
+        <Route path='/treasurer/transactions' element={<TreasurerLayout><TransactionManagementPage /></TreasurerLayout>} />
+        <Route path='/treasurer/disbursement-management' element={<TreasurerLayout><DisbursementManagementPage /></TreasurerLayout>} />
+        {/*Secretary Section */}
+        <Route path="/secretary/dashboard" element={<SecretaryLayout><SecretaryDashboardPage /></SecretaryLayout>} />
+        <Route path="/secretary/campaign-management" element={<SecretaryLayout><CampaignManagementPage /></SecretaryLayout>} />
+        <Route path="/secretary/campaign-requests" element={<SecretaryLayout><CampaignRequestsPage /></SecretaryLayout>} />
+        <Route path="/secretary/reports" element={<SecretaryLayout><ReportsAndDocumentationPage /></SecretaryLayout>} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Router>
+  );
 }
 export default App;

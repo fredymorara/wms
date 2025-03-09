@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { Layout, Button, Typography, Form, Input, message } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import logo from '../assets/kabu-logo-Beveled-shadow.png'; // Make sure to import the logo
 
 const { Header, Content, Footer } = Layout;
 const { Title } = Typography;
 
 const SignupPage = () => {
     const navigate = useNavigate();
-    const [form] = Form.useForm(); // Form instance
+    const [form] = Form.useForm();
 
     const onFinish = async (values) => {
-        // Simulate API signup (replace with your actual API endpoint)
         const response = await simulateSignup(values);
 
         if (response.success) {
@@ -23,7 +23,6 @@ const SignupPage = () => {
     };
 
     const simulateSignup = async (values) => {
-        // Basic email validation
         const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
         if (!emailRegex.test(values.email)) {
@@ -33,18 +32,15 @@ const SignupPage = () => {
         if (values.password.length < 6) {
             return { success: false, message: 'Password must be at least 6 characters long.' };
         }
-        // Replace with your actual API call
+
         return new Promise((resolve) => {
             setTimeout(() => {
-                // Simple email domain check (replace with your actual allowed domain)
                 if (!values.email.endsWith('@yourstudentsdomain.com')) {
                     resolve({ success: false, message: 'Please use your university email address.' });
                     return;
                 }
-                // Mock signup data (replace with data from your database)
-                // This is just a placeholder.
                 resolve({ success: true });
-            }, 1000); // Simulate network latency
+            }, 1000);
         });
     };
 
@@ -62,21 +58,34 @@ const SignupPage = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '0 50px',
+                    padding: '0 20px',
                     height: '80px',
                 }}
             >
-                <Title level={3} style={{ color: 'white', margin: 0 }}>
-                    Kabarak Student Welfare Management System
+                <img
+                    src={logo}
+                    alt="Kabarak University Logo"
+                    style={{
+                        height: '60px',
+                    }}
+                />
+                <Title
+                    level={4}
+                    className="text-white mx-auto text-center flex-1"
+                >
+                    <span className="hidden sm:inline text-xl text-white md:text-2xl lg:text-3xl">Kabarak Student Welfare Management System</span>
+                    <span className="sm:hidden text-lg text-white md:text-xl">KSW System</span>
                 </Title>
-                 <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
-                    <Link to="/">Back to Home</Link>
-                </Button>
+                <div className="ml-4">
+                    <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
+                        <Link to="/">Back to Home</Link>
+                    </Button>
+                </div>
             </Header>
 
             <Content
                 style={{
-                    padding: '50px',
+                    padding: '20px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
@@ -84,8 +93,9 @@ const SignupPage = () => {
             >
                 <div
                     style={{
-                        width: '400px', // Adjust the width as needed
-                        padding: '3rem',
+                        maxWidth: '400px',
+                        width: '90%',
+                        padding: '2rem',
                         borderRadius: 10,
                         backgroundColor: 'rgba(255, 255, 255, 0.7)',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
@@ -94,63 +104,18 @@ const SignupPage = () => {
                     <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '1.5rem' }}>
                         Sign Up
                     </Title>
-                    <Form
-                        form={form} // Link form instance
-                        name="signup_form"
-                        initialValues={{ remember: true }}
-                        onFinish={onFinish}
-                    >
-                        <Form.Item
-                            name="email"
-                            rules={[
-                                { required: true, message: 'Please enter your email!' },
-                                { type: 'email', message: 'Please enter a valid email!' },
-                            ]}
-                        >
+                    <Form form={form} name="signup_form" initialValues={{ remember: true }} onFinish={onFinish}>
+                        <Form.Item name="email" rules={[{ required: true, message: 'Please enter your email!' }, { type: 'email', message: 'Please enter a valid email!' }]}>
                             <Input prefix={<MailOutlined />} placeholder="Email" />
                         </Form.Item>
-
-                        <Form.Item
-                            name="password"
-                            rules={[{ required: true, message: 'Please enter your password!' }]}
-                        >
-                            <Input
-                                prefix={<LockOutlined />}
-                                type="password"
-                                placeholder="Password"
-                            />
+                        <Form.Item name="password" rules={[{ required: true, message: 'Please enter your password!' }]}>
+                            <Input prefix={<LockOutlined />} type="password" placeholder="Password" />
                         </Form.Item>
-                         <Form.Item
-                            name="confirmPassword"
-                            dependencies={['password']}
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please confirm your password!',
-                                },
-                                ({ getFieldValue }) => ({
-                                    validator(_, value) {
-                                        if (!value || getFieldValue('password') === value) {
-                                            return Promise.resolve();
-                                        }
-                                        return Promise.reject(new Error('The two passwords that you entered do not match!'));
-                                    },
-                                }),
-                            ]}
-                        >
-                            <Input
-                                prefix={<LockOutlined />}
-                                type="password"
-                                placeholder="Confirm Password"
-                            />
+                        <Form.Item name="confirmPassword" dependencies={['password']} rules={[{ required: true, message: 'Please confirm your password!' }, ({ getFieldValue }) => ({ validator(_, value) { if (!value || getFieldValue('password') === value) { return Promise.resolve(); } return Promise.reject(new Error('The two passwords that you entered do not match!')); }, }),]}>
+                            <Input prefix={<LockOutlined />} type="password" placeholder="Confirm Password" />
                         </Form.Item>
-
                         <Form.Item>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                style={{ width: '100%', backgroundColor: 'maroon', borderColor: 'maroon' }}
-                            >
+                            <Button type="primary" htmlType="submit" style={{ width: '100%', backgroundColor: '#b5e487', color: 'black', borderColor: 'maroon' }}>
                                 Sign Up
                             </Button>
                         </Form.Item>

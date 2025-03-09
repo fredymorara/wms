@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Col, Row, Progress, Button, Statistic, InputNumber, Form, Select, Alert, Typography, Layout } from 'antd';
-import { FundViewOutlined, HistoryOutlined, MessageOutlined } from '@ant-design/icons';
+import { Row, Col, Progress, Button, Statistic, InputNumber, Form, Select, Alert, Typography } from 'antd';
 import { Link } from 'react-router-dom';
+import MemberLayout from '../../layout/MemberLayout';
 
 const { Option } = Select;
-const { Header, Content } = Layout;
-const { Title, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 const MemberDashboardPage = () => {
+    // State management
     const [campaigns, setCampaigns] = useState([]);
     const [recentActivity, setRecentActivity] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,28 +15,65 @@ const MemberDashboardPage = () => {
     const [selectedCampaign, setSelectedCampaign] = useState(null);
     const [contributionAmount, setContributionAmount] = useState(100);
     const [contributionSuccess, setContributionSuccess] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
+    // Default data
+    const defaultCampaigns = [
+        {
+            id: 1,
+            title: 'Default Medical Fund for John',
+            description: 'Help John with his default medical expenses',
+            goal: 100000,
+            raised: 60000,
+            contributors: 45,
+        },
+        {
+            id: 2,
+            title: 'Default Education Fund for Jane',
+            description: 'Support Jane\'s default education journey',
+            goal: 50000,
+            raised: 40000,
+            contributors: 62,
+        },
+    ];
+
+    // Fetch data from the server
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const campaignsResponse = await fetch('http://localhost:5000/api/member/campaigns');
+                const [campaignsResponse, contributionsResponse] = await Promise.all([
+                    fetch('http://localhost:5000/api/member/campaigns'),
+                    fetch('http://localhost:5000/api/member/contributions'),
+                ]);
+
                 if (!campaignsResponse.ok) {
-                    throw new Error(`HTTP error! status: ${campaignsResponse.status}`);
+                    throw new Error(`Campaigns API failed with status: ${campaignsResponse.status}`);
                 }
-                const campaignsData = await campaignsResponse.json();
+                if (!contributionsResponse.ok) {
+                    throw new Error(`Contributions API failed with status: ${contributionsResponse.status}`);
+                }
+
+                const [campaignsData, contributionsData] = await Promise.all([
+                    campaignsResponse.json(),
+                    contributionsResponse.json(),
+                ]);
+
                 setCampaigns(campaignsData);
                 setSelectedCampaign(campaignsData[0]?.id || null);
 
-                const activityResponse = await fetch('/api/member/activity');
-                if (!activityResponse.ok) {
-                    throw new Error(`HTTP error! status: ${activityResponse.status}`);
-                }
-                const activityData = await activityResponse.json();
+                // Map contributions to recent activity
+                const activityData = contributionsData.map(contribution => ({
+                    id: contribution.id,
+                    description: `Contributed KES ${contribution.amount} to ${contribution.campaign}`,
+                    link: `/member/campaigns/${contribution.id}`,
+                    date: contribution.date,
+                }));
                 setRecentActivity(activityData);
-
-                setLoading(false);
             } catch (e) {
                 setError(e.message);
+                setCampaigns(defaultCampaigns);
+                setRecentActivity([]); // No fallback for recent activity
+            } finally {
                 setLoading(false);
             }
         };
@@ -44,41 +81,12 @@ const MemberDashboardPage = () => {
         fetchData();
     }, []);
 
-    const defaultCampaigns = [
-        {
-            id: 1,
-            title: 'Default Medical Fund for John',
-            progress: 60,
-            description: 'Help John with his default medical expenses',
-            link: '/member/campaigns/1',
-            target: 100000,
-            raised: 60000,
-            contributors: 45,
-        },
-        {
-            id: 2,
-            title: 'Default Education Fund for Jane',
-            progress: 80,
-            description: 'Support Jane\'s default education journey',
-            link: '/member/campaigns/2',
-            target: 50000,
-            raised: 40000,
-            contributors: 62,
-        },
-    ];
-
-    const defaultRecentActivity = [
-        { id: 1, description: 'Default activity: Contributed KES 500 to Medical Fund for John', link: '/member/campaigns/1' },
-        { id: 2, description: 'Default activity: Viewed Education Fund for Jane campaign', link: '/member/campaigns/2' },
-    ];
-
+    // Handle contribution submission
     const onFinish = async (values) => {
         try {
             const response = await fetch('http://localhost:5000/api/member/contribute', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     campaignId: selectedCampaign,
                     amount: contributionAmount,
@@ -87,9 +95,28 @@ const MemberDashboardPage = () => {
 
             if (response.ok) {
                 setContributionSuccess(true);
-                const campaignsResponse = await fetch('/api/member/campaigns');
-                const campaignsData = await campaignsResponse.json();
+
+                // Fetch updated campaigns and contributions
+                const [campaignsResponse, contributionsResponse] = await Promise.all([
+                    fetch('http://localhost:5000/api/member/campaigns'),
+                    fetch('http://localhost:5000/api/member/contributions'),
+                ]);
+
+                const [campaignsData, contributionsData] = await Promise.all([
+                    campaignsResponse.json(),
+                    contributionsResponse.json(),
+                ]);
+
                 setCampaigns(campaignsData);
+
+                // Update recent activity with new contribution
+                const newActivity = {
+                    id: contributionsData.length + 1,
+                    description: `Contributed KES ${contributionAmount} to ${campaigns.find(c => c.id === selectedCampaign)?.title}`,
+                    link: `/member/campaigns/${selectedCampaign}`,
+                    date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+                };
+                setRecentActivity([newActivity, ...recentActivity]);
             } else {
                 setError('Contribution failed. Please try again.');
             }
@@ -103,213 +130,206 @@ const MemberDashboardPage = () => {
         setError('Form submission failed. Please check the fields.');
     };
 
+    // Mobile detection
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Limit campaigns based on screen size
+    const displayedCampaigns = campaigns.slice(0, isMobile ? 2 : 6);
+
+    // Section styling
+    const sectionStyle = {
+        padding: isMobile ? '24px 16px' : '32px 24px',
+        marginBottom: 24,
+        borderBottom: '2px solid #f0f0f0',
+    };
+
     return (
-        <Layout
-            style={{
-                background: 'linear-gradient(to bottom, #F8E8EC 70%, #d9f7be)',
+        <MemberLayout>
+            <div style={{
+                width: '100%',
+                maxWidth: 1600,
+                margin: '0 auto',
+                backgroundColor: '#fff',
                 minHeight: '100vh',
-            }}
-        >
-            <Header
-                style={{
-                    background: 'maroon',
-                    color: 'white',
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    padding: '0 50px',
-                    height: '80px',
-                }}
-            >
-                <Title level={3} style={{ color: 'white', margin: 0 }}>
-                    Kabarak Student Welfare Management System
-                </Title>
-            </Header>
-            <Content style={{ padding: '20px' }}> {/* Reduced padding for smaller screens */}
-                <div className="container">
-                    <Title level={2} style={{ color: 'maroon', marginBottom: '20px', textAlign: 'center' }}>Member Dashboard</Title>
-
-                    {loading && <p>Loading...</p>}
-                    {error && <Alert message={`Error fetching data: ${error}. Displaying default data.`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: '20px' }} />}
-                    {contributionSuccess && (
-                        <Alert
-                            message="Contribution successful!"
-                            type="success"
-                            closable
-                            onClose={() => setContributionSuccess(false)}
-                            style={{ marginBottom: '20px' }}
-                        />
-                    )}
-
-                    {(!loading && !error) ? (
-                        <>
-                            <Card title={<Title level={4}>Active Campaigns</Title>} extra={<Link to="/member/campaigns">View All</Link>} className="mb-4">
-                                <div className="overflow-x-auto">
-                                    <Row gutter={[16, 16]} style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}> {/* Added flexWrap: 'wrap' */}
-                                        {campaigns.map((campaign) => (
-                                            <Col key={campaign.id} xs={24} sm={12} md={8} lg={6} style={{ marginBottom: '16px' }}> {/* Added responsive breakpoints */}
-                                                <Card
-                                                    title={campaign.title}
-                                                    actions={[
-                                                        <Link to={`/member/campaigns/${campaign.id}`} key="donate">
-                                                            <Button type="primary" style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}>Donate</Button>
-                                                        </Link>,
-                                                    ]}
-                                                >
-                                                    <Paragraph>{campaign.description}</Paragraph>
-                                                    <Progress percent={(campaign.raised / campaign.target) * 100} size="small" strokeColor="maroon" />
-                                                    <Statistic title="Target" value={campaign.target} prefix="KES" groupSeparator="," />
-                                                    <Statistic title="Raised" value={campaign.raised} prefix="KES" groupSeparator="," />
-                                                    <Statistic title="Contributors" value={campaign.contributors} suffix="people" />
-                                                </Card>
-                                            </Col>
-                                        ))}
-                                    </Row>
-                                </div>
-                            </Card>
-
-                            <Card title={<Title level={4}>Quick Contribution</Title>} className="mb-4">
-                                <Form
-                                    name="quickContribution"
-                                    initialValues={{ remember: true, }}
-                                    onFinish={onFinish}
-                                    onFinishFailed={onFinishFailed}
-                                    autoComplete="off"
-                                    layout="vertical"
-                                >
-                                    <Form.Item
-                                        label={<Title level={5}>Select Campaign</Title>}
-                                    >
-                                        <Select
-                                            value={selectedCampaign}
-                                            onChange={setSelectedCampaign}
-                                            disabled={campaigns.length === 0}
-                                            style={{ width: '100%' }}  // Ensure full width on smaller screens
-                                        >
-                                            {campaigns.map(campaign => (
-                                                <Option value={campaign.id} key={campaign.id}>{campaign.title}</Option>
-                                            ))}
-                                        </Select>
-                                    </Form.Item>
-                                    <Form.Item
-                                        label={<Title level={5}>Contribution Amount (KES)</Title>}
-                                    >
-                                        <InputNumber
-                                            defaultValue={contributionAmount}
-                                            formatter={(value) => `KES ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                            parser={(value) => value.replace(/\KES\s?|(,*)/g, '')}
-                                            onChange={setContributionAmount}
-                                            style={{ width: '100%' }}  // Ensure full width on smaller screens
-                                        />
-                                    </Form.Item>
-                                    <Form.Item>
-                                        <Button type="primary" htmlType="submit" disabled={campaigns.length === 0} style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white', width: '100%' }}>Contribute Now</Button> {/* Full width button */}
-                                    </Form.Item>
-                                </Form>
-                            </Card>
-
-                            <Card title={<Title level={4}>Recent Activity</Title>} extra={<Link to="/member/history">View All</Link>}>
-                                <ul>
-                                    {recentActivity.map(activity => (
-                                        <li key={activity.id} className="mb-2">
-                                            <Link to={activity.link} style={{ color: 'maroon' }}>
-                                                {activity.description}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </Card>
-
-                            <Card title={<Title level={4}>Announcements</Title>} icon={<MessageOutlined />} >
-                                <Paragraph>Welcome to the Student Welfare System! Check out our active campaigns and support your fellow students.</Paragraph>
-                            </Card>
-                        </>
-                    ) : (
-                        <>
-                            <Card title={<Title level={4}>Active Campaigns</Title>} extra={<Link to="/member/campaigns">View All</Link>} className="mb-4">
-                                <div className="overflow-x-auto">
-                                    <Row gutter={[16, 16]} style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>  {/* Added flexWrap: 'wrap' */}
-                                        {defaultCampaigns.map((campaign) => (
-                                            <Col key={campaign.id} xs={24} sm={12} md={8} lg={6} style={{ marginBottom: '16px' }}> {/* Added responsive breakpoints */}
-                                                <Card
-                                                    title={campaign.title}
-                                                    actions={[
-                                                        <Link to={`/member/campaigns/${campaign.id}`} key="donate">
-                                                            <Button type="primary" style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}>Donate</Button>
-                                                        </Link>,
-                                                    ]}
-                                                >
-                                                    <Paragraph>{campaign.description}</Paragraph>
-                                                    <Progress percent={(campaign.raised / campaign.target) * 100} size="small" strokeColor="maroon" />
-                                                    <Statistic title="Target" value={campaign.target} prefix="KES" groupSeparator="," />
-                                                    <Statistic title="Raised" value={campaign.raised} prefix="KES" groupSeparator="," />
-                                                    <Statistic title="Contributors" value={campaign.contributors} suffix="people" />
-                                                </Card>
-                                            </Col>
-                                        ))}
-                                    </Row>
-                                </div>
-                            </Card>
-
-                            <Card title={<Title level={4}>Quick Contribution</Title>} className="mb-4">
-                                <Form
-                                    name="quickContribution"
-                                    initialValues={{ remember: true, }}
-                                    onFinish={() => { }}
-                                    onFinishFailed={() => { }}
-                                    autoComplete="off"
-                                    layout="vertical"
-                                >
-                                    <Form.Item
-                                        label={<Title level={5}>Select Campaign</Title>}
-                                    >
-                                        <Select
-                                            defaultValue={defaultCampaigns[0].id}
-                                            disabled
-                                            style={{ width: '100%' }} // Ensure full width on smaller screens
-                                        >
-                                            {defaultCampaigns.map(campaign => (
-                                                <Option value={campaign.id} key={campaign.id}>{campaign.title}</Option>
-                                            ))}
-                                        </Select>
-                                    </Form.Item>
-                                    <Form.Item
-                                        label={<Title level={5}>Contribution Amount (KES)</Title>}
-                                    >
-                                        <InputNumber
-                                            defaultValue={100}
-                                            formatter={(value) => `KES ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                            parser={(value) => value.replace(/\KES\s?|(,*)/g, '')}
-                                            disabled
-                                            style={{ width: '100%' }}  // Ensure full width on smaller screens
-                                        />
-                                    </Form.Item>
-                                    <Form.Item>
-                                        <Button type="primary" htmlType="submit" disabled style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white', width: '100%' }}>Contribute Now</Button> {/* Full width button */}
-                                    </Form.Item>
-                                </Form>
-                            </Card>
-
-                            <Card title={<Title level={4}>Recent Activity</Title>} extra={<Link to="/member/history">View All</Link>}>
-                                <ul>
-                                    {defaultRecentActivity.map(activity => (
-                                        <li key={activity.id} className="mb-2">
-                                            <Link to={activity.link} style={{ color: '#b5e487' }}>
-                                                {activity.description}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </Card>
-
-                            <Card title={<Title level={4}>Announcements</Title>} icon={<MessageOutlined />} >
-                                <Paragraph>Welcome to the Student Welfare System! Check out our active campaigns and support your fellow students.</Paragraph>
-                            </Card>
-                        </>
-                    )}
+            }}>
+                {/* Dashboard Header */}
+                <div style={{ ...sectionStyle, textAlign: 'center' }}>
+                    <Title level={1} style={{
+                        color: 'maroon',
+                        fontSize: isMobile ? '1.75rem' : '2.5rem',
+                        marginBottom: 0,
+                    }}>
+                        Student Dashboard
+                    </Title>
                 </div>
-            </Content>
-        </Layout>
+
+                {/* Loading and Error States */}
+                {loading && <Alert message="Loading..." type="info" showIcon style={{ marginBottom: 24 }} />}
+                {error && <Alert message={`Error: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: 24 }} />}
+                {contributionSuccess && <Alert message="Contribution successful!" type="success" closable onClose={() => setContributionSuccess(false)} style={{ marginBottom: 24 }} />}
+
+                {/* Active Campaigns */}
+                <div style={sectionStyle}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 24,
+                    }}>
+                        <Title level={3} style={{ color: 'maroon', margin: 0 }}>
+                            Active Campaigns
+                        </Title>
+                        <Link to="/member/campaigns" style={{ color: 'maroon' }}>
+                            View All →
+                        </Link>
+                    </div>
+
+                    <Row gutter={[24, 24]}>
+                        {displayedCampaigns.map(campaign => (
+                            <Col key={campaign.id} xs={24} md={12} lg={8}>
+                                <div style={{
+                                    border: '1px solid',
+                                    borderRadius: 8,
+                                    padding: 16,
+                                    marginBottom: 16,
+                                }}>
+                                    <Title level={4}>
+                                        {campaign.title}
+                                    </Title>
+                                    <Progress
+                                        percent={(campaign.raised / campaign.goal) * 100}
+                                        strokeColor="maroon"
+                                        style={{ margin: '16px 0' }}
+                                    />
+                                    <Row gutter={16}>
+                                        <Col span={12}>
+                                            <Statistic title="Target" value={campaign.goal} prefix="KES" />
+                                        </Col>
+                                        <Col span={12}>
+                                            <Statistic title="Raised" value={campaign.raised} prefix="KES" />
+                                        </Col>
+                                    </Row>
+                                    <Button
+                                        block
+                                        type="primary"
+                                        style={{
+                                            background: '#b5e487',
+                                            borderColor: 'maroon',
+                                            color: 'black',
+                                            marginTop: 16,
+                                        }}
+                                    >
+                                        Donate Now
+                                    </Button>
+                                </div>
+                            </Col>
+                        ))}
+                    </Row>
+                </div>
+
+                {/* Quick Contribution */}
+                <div style={sectionStyle}>
+                    <Title level={3} style={{ color: 'maroon', marginBottom: 24, textAlign: 'center' }}>
+                        Quick Contribution
+                    </Title>
+                    <div style={{ maxWidth: 600, margin: '0 auto' }}>
+                        <Form layout="vertical" onFinish={onFinish} onFinishFailed={onFinishFailed}>
+                            <Form.Item label={<Text strong>Select Campaign</Text>}>
+                                <Select
+                                    value={selectedCampaign}
+                                    onChange={setSelectedCampaign}
+                                    disabled={loading || error}
+                                >
+                                    {campaigns.map(c => (
+                                        <Option key={c.id} value={c.id}>{c.title}</Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                            <Form.Item label={<Text strong>Amount (KES)</Text>}>
+                                <InputNumber
+                                    min={100}
+                                    step={100}
+                                    value={contributionAmount}
+                                    onChange={setContributionAmount}
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+                            <Form.Item>
+                                <Button
+                                    block
+                                    type="primary"
+                                    htmlType="submit"
+                                    style={{
+                                        background: '#b5e487',
+                                        borderColor: 'maroon',
+                                        color: 'black',
+                                        height: isMobile ? 48 : 40,
+                                    }}
+                                >
+                                    Contribute Now
+                                </Button>
+                            </Form.Item>
+                        </Form>
+                    </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div style={sectionStyle}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 24,
+                    }}>
+                        <Title level={3} style={{ color: 'maroon', margin: 0 }}>
+                            Recent Activity
+                        </Title>
+                        <Link to="/member/history" style={{ color: 'maroon' }}>
+                            View All →
+                        </Link>
+                    </div>
+
+                    <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+                        {recentActivity.map(activity => (
+                            <div key={activity.id} style={{
+                                padding: '12px 0',
+                                borderBottom: '1px solid #f0f0f0',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                            }}>
+                                <Text style={{ flex: 1 }}>{activity.description}</Text>
+                                <Text type="secondary" style={{ marginLeft: 16 }}>
+                                    {new Date(activity.date).toLocaleDateString()}
+                                </Text>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Announcements */}
+                <div style={sectionStyle}>
+                    <Title level={3} style={{ color: 'maroon', marginBottom: 24 }}>
+                        Announcements
+                    </Title>
+                    <div style={{
+                        padding: 16,
+                        background: '#fff5f5',
+                        borderRadius: 8,
+                    }}>
+                        <Text style={{ fontSize: isMobile ? 14 : 16 }}>
+                            Welcome to the Student Welfare System! Check out our active campaigns
+                            and support your fellow students.
+                        </Text>
+                    </div>
+                </div>
+            </div>
+        </MemberLayout>
     );
 };
 

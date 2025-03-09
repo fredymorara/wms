@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Alert, Layout, Typography } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, Button, Alert, Typography, Card, Row, Col } from 'antd';
+import MemberLayout from '../../layout/MemberLayout';
 
-const { Header, Content } = Layout;
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 function HelpPage() {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Mobile detection
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     const onFinish = async (values) => {
         setLoading(true);
@@ -41,91 +50,103 @@ function HelpPage() {
         setErrorMessage('Please fill in all required fields correctly.');
     };
 
+    // Section styling
+    const sectionStyle = {
+        padding: isMobile ? '24px 16px' : '32px 24px',
+        marginBottom: 24,
+        borderBottom: '2px solid #f0f0f0',
+    };
+
     return (
-        <Layout
-            style={{
-                background: 'linear-gradient(to bottom, #F8E8EC 70%, #d9f7be)',
+        <MemberLayout>
+            <div style={{
+                width: '100%',
+                maxWidth: 1600,
+                margin: '0 auto',
+                backgroundColor: '#fff',
                 minHeight: '100vh',
-            }}
-        >
-            <Header
-                style={{
-                    background: 'maroon',
-                    color: 'white',
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    padding: '0 50px',
-                    height: '80px',
-                }}
-            >
-                <Title level={3} style={{ color: 'white', margin: 0 }}>
-                    Kabarak Student Welfare Management System
-                </Title>
-            </Header>
-            <Content style={{ padding: '50px' }}>
-                <div className="container">
-                    <Title level={2} style={{ color: 'maroon', marginBottom: '20px', textAlign: 'center' }}>Need Help?</Title>
+            }}>
+                {/* Help Header */}
+                <div style={{ ...sectionStyle, textAlign: 'center' }}>
+                    <Title level={1} style={{
+                        color: 'maroon',
+                        fontSize: isMobile ? '1.75rem' : '2.5rem',
+                        marginBottom: 0,
+                    }}>
+                        Need Help?
+                    </Title>
                     <Paragraph style={{ marginBottom: '20px', textAlign: 'center' }}>
                         Please submit your inquiry below, and we will get back to you as soon as possible.
                     </Paragraph>
-
-                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: '8px', padding: '20px' }}>
-                        <Form
-                            form={form}
-                            layout="vertical"
-                            onFinish={onFinish}
-                            onFinishFailed={onFinishFailed}
-                            autoComplete="off"
-                        >
-                            <Form.Item
-                                label={<Title level={5}>Your Name</Title>}
-                                name="name"
-                                rules={[{ required: true, message: 'Please enter your name!' }]}
-                            >
-                                <Input />
-                            </Form.Item>
-
-                            <Form.Item
-                                label={<Title level={5}>Your Email</Title>}
-                                name="email"
-                                rules={[
-                                    { required: true, message: 'Please enter your email!' },
-                                    { type: 'email', message: 'Please enter a valid email!' },
-                                ]}
-                            >
-                                <Input />
-                            </Form.Item>
-
-                            <Form.Item
-                                label={<Title level={5}>Subject</Title>}
-                                name="subject"
-                                rules={[{ required: true, message: 'Please enter the subject!' }]}
-                            >
-                                <Input />
-                            </Form.Item>
-
-                            <Form.Item
-                                label={<Title level={5}>Message</Title>}
-                                name="message"
-                                rules={[{ required: true, message: 'Please enter your message!' }]}
-                            >
-                                <Input.TextArea rows={4} />
-                            </Form.Item>
-
-                            {successMessage && <Alert message={successMessage} type="success" showIcon style={{ marginBottom: '15px' }} />}
-                            {errorMessage && <Alert message={errorMessage} type="error" showIcon style={{ marginBottom: '15px' }} />}
-
-                            <Form.Item>
-                                <Button type="primary" htmlType="submit" loading={loading} style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}>
-                                    Submit Inquiry
-                                </Button>
-                            </Form.Item>
-                        </Form>
-                    </div>
                 </div>
-            </Content>
-        </Layout>
+
+                {/* Inquiry Form */}
+                <div style={sectionStyle}>
+                    <Row justify="center">
+                        <Col xs={24} md={16} lg={12}>
+                            <Card>
+                                <Form
+                                    form={form}
+                                    layout="vertical"
+                                    onFinish={onFinish}
+                                    onFinishFailed={onFinishFailed}
+                                    autoComplete="off"
+                                >
+                                    <Form.Item
+                                        label={<Text strong>Your Name</Text>}
+                                        name="name"
+                                        rules={[{ required: true, message: 'Please enter your name!' }]}
+                                    >
+                                        <Input />
+                                    </Form.Item>
+
+                                    <Form.Item
+                                        label={<Text strong>Your Email</Text>}
+                                        name="email"
+                                        rules={[
+                                            { required: true, message: 'Please enter your email!' },
+                                            { type: 'email', message: 'Please enter a valid email!' },
+                                        ]}
+                                    >
+                                        <Input />
+                                    </Form.Item>
+
+                                    <Form.Item
+                                        label={<Text strong>Subject</Text>}
+                                        name="subject"
+                                        rules={[{ required: true, message: 'Please enter the subject!' }]}
+                                    >
+                                        <Input />
+                                    </Form.Item>
+
+                                    <Form.Item
+                                        label={<Text strong>Message</Text>}
+                                        name="message"
+                                        rules={[{ required: true, message: 'Please enter your message!' }]}
+                                    >
+                                        <Input.TextArea rows={4} />
+                                    </Form.Item>
+
+                                    {successMessage && <Alert message={successMessage} type="success" showIcon style={{ marginBottom: '15px' }} />}
+                                    {errorMessage && <Alert message={errorMessage} type="error" showIcon style={{ marginBottom: '15px' }} />}
+
+                                    <Form.Item>
+                                        <Button
+                                            type="primary"
+                                            htmlType="submit"
+                                            loading={loading}
+                                            style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white', width: '100%' }}
+                                        >
+                                            Submit Inquiry
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
+                            </Card>
+                        </Col>
+                    </Row>
+                </div>
+            </div>
+        </MemberLayout>
     );
 }
 
