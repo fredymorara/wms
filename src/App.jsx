@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useState } from 'react';
 //default
 import LandingPage from './pages/LandingPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
@@ -8,29 +7,18 @@ import SignupPage from './pages/SignupPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 //admin
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
-import CampaignApprovalPage from './pages/admin/CampaignApproval.jsx';
+import CampaignManagementPage from './pages/admin/CampaignManagement.jsx';
 import FundManagementPage from './pages/admin/FundManagement.jsx';
-import UserManagementPage from './pages/admin/UserManagement.jsx';
+import ReportsPage from './pages/admin/ReportsPage.jsx';
+import AdminProfilePage from './pages/admin/AdminProfilePage.jsx';
 //member
 import ProfileSettingsPage from './pages/member/ProfileSettingsPage.jsx';
 import CampaignsPage from './pages/member/CampaignsPage.jsx';
 import HelpPage from './pages/member/HelpPage.jsx';
 import ContributionHistoryPage from './pages/member/ContributionHistoryPage.jsx';
 import MemberDashboardPage from './pages/member/MemberDashboardPage.jsx';
-//secretary
-import SecretaryDashboardPage from './pages/secretary/SecretaryDashboardPage.jsx';
-import CampaignManagementPage from './pages/secretary/CampaignManagement.jsx';
-import CampaignRequestsPage from './pages/secretary/CampaignRequests.jsx';
-import ReportsAndDocumentationPage from './pages/secretary/ReportsAndDocumentation.jsx';
-//treasurer
-import TreasurerDashboardPage from './pages/treasurer/TreasurerDashboard.jsx';
-import TransactionManagementPage from './pages/treasurer/TransactionManagement.jsx';
-import DisbursementManagementPage from './pages/treasurer/DisbursementManagement.jsx';
-//layout
-import AdminLayout from './layout/AdminLayout.jsx'; // Import AdminLayout
-import MemberLayout from './layout/MemberLayout.jsx'; // Import MemberLayout
-import SecretaryLayout from './layout/SecretaryLayout.jsx'; // Import SecretaryLayout
-import TreasurerLayout from './layout/TreasurerLayout.jsx'; // Import TreasurerLayout
+
+
 function App() {
   return (
     <Router>
@@ -45,19 +33,13 @@ function App() {
         <Route path="/member/campaigns" element={<CampaignsPage />} />
         <Route path="/member/help" element={<HelpPage />} />
         {/*Admin Section */}
-        <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-        <Route path="/admin/user-management" element={<AdminLayout><UserManagementPage /></AdminLayout>} />
-        <Route path="/admin/campaign-approval" element={<AdminLayout><CampaignApprovalPage /></AdminLayout>} />
-        <Route path="/admin/fund-management" element={<AdminLayout><FundManagementPage /></AdminLayout>} />
-        {/*Treasurer Section */}
-        <Route path='/treasurer/dashboard' element={<TreasurerLayout><TreasurerDashboardPage /></TreasurerLayout>} />
-        <Route path='/treasurer/transactions' element={<TreasurerLayout><TransactionManagementPage /></TreasurerLayout>} />
-        <Route path='/treasurer/disbursement-management' element={<TreasurerLayout><DisbursementManagementPage /></TreasurerLayout>} />
-        {/*Secretary Section */}
-        <Route path="/secretary/dashboard" element={<SecretaryLayout><SecretaryDashboardPage /></SecretaryLayout>} />
-        <Route path="/secretary/campaign-management" element={<SecretaryLayout><CampaignManagementPage /></SecretaryLayout>} />
-        <Route path="/secretary/campaign-requests" element={<SecretaryLayout><CampaignRequestsPage /></SecretaryLayout>} />
-        <Route path="/secretary/reports" element={<SecretaryLayout><ReportsAndDocumentationPage /></SecretaryLayout>} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/campaigns" element={<CampaignManagementPage />} />
+        <Route path="/admin/funds" element={<FundManagementPage />} />
+        <Route path="/admin/reports" element={<ReportsPage />} />
+        <Route path="/admin/profile" element={<AdminProfilePage />} />
+        {/*Default */}
+        <Route path="/404" element={<NotFoundPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>

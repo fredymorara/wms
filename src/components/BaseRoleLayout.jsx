@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Breadcrumb, Avatar, theme } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import { MenuOutlined, CloseOutlined, UserOutlined } from '@ant-design/icons';
-import logo from '../assets/kabu-logo-Beveled-shadow.png';
+import logo from '../assets/Kabarak_University_Extended_logo_910x256.png';
 
 const { Header, Content, Footer } = Layout;
 
@@ -57,7 +57,7 @@ const BaseRoleLayout = ({
             <Header style={{
                 display: 'flex',
                 alignItems: 'center',
-                background: 'maroon',
+                background: 'white',
                 padding: '0 24px',
                 height: 64,
             }}>
@@ -76,12 +76,12 @@ const BaseRoleLayout = ({
                 {/* Desktop Navigation Bar */}
                 {!isMobileView && (
                     <Menu
-                        theme="dark"
+                        theme="light"
                         mode="horizontal"
                         selectedKeys={getSelectedKeys()}
                         items={menuItems}
                         style={{
-                            background: 'maroon',
+                            background: 'white',
                             borderBottom: 'none',
                             lineHeight: '64px',
                             flex: 1,
@@ -110,7 +110,7 @@ const BaseRoleLayout = ({
                         style={{
                             background: 'none',
                             border: 'none',
-                            color: 'white',
+                            color: 'maroon',
                             fontSize: '24px',
                             cursor: 'pointer',
                             padding: 0,
@@ -124,18 +124,16 @@ const BaseRoleLayout = ({
             {/* Mobile Menu */}
             {isMobileView && isMobileMenuOpen && (
                 <div style={{
-                    background: 'maroon',
                     padding: '16px',
                     position: 'sticky',
                     top: 0,
                     zIndex: 1
                 }}>
                     <Menu
-                        theme="dark"
+                        theme="light"
                         mode="inline"
                         selectedKeys={getSelectedKeys()}
                         items={menuItems}
-                        style={{ background: 'maroon' }}
                     />
                 </div>
             )}
@@ -162,7 +160,7 @@ const BaseRoleLayout = ({
             <Footer style={{
                 textAlign: 'center',
                 fontSize: '1rem',
-                backgroundColor: '#92c282',
+                backgroundColor: '#b5e487',
                 padding: '24px 16px'
             }}>
                 KABU Student Welfare Management System ©2025 Team Project.
