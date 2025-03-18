@@ -22,7 +22,7 @@ const MemberLayout = ({ children }) => {
         <BaseRoleLayout
             roleConfig={{
                 menuItems,
-                apiEndpoint: 'http://localhost:5000/api/member/profile' // Ensure this endpoint returns profilePicture
+                apiEndpointPath: '/member/profile' // Ensure this endpoint returns profilePicture
             }}
         >
             {children}

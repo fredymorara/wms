@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Select, Switch, Upload, Modal, Avatar, Alert, Spin, Typography, Card, Row, Col } from 'antd';
-import { UploadOutlined, EditOutlined, UserOutlined, MailOutlined, PhoneOutlined, GlobalOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Alert, Modal, Spin, Typography, Card, Row, Col, Avatar, Upload } from 'antd';
+import { UserOutlined, EditOutlined, UploadOutlined } from '@ant-design/icons';
 import MemberLayout from '../../layout/MemberLayout';
+import { API_URL } from '../../services/api';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -15,20 +16,33 @@ function ProfileSettingsPage() {
     const [uploadError, setUploadError] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
 
-    // Fetch profile data
+    // Fetch profile data with authentication
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        };
+    };
+
     useEffect(() => {
         const fetchProfileData = async () => {
+            setLoading(true);
             try {
-                const response = await fetch('http://localhost:5000/api/member/profile');
+                const response = await fetch(`${API_URL}/member/profile`, {
+                    headers: getAuthHeaders(),
+                });
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
+
                 const data = await response.json();
                 setProfileData(data);
-                form.setFieldsValue(data);
-                setLoading(false);
+                form.setFieldsValue(data); // Set form values
             } catch (e) {
                 setError(e.message);
+            } finally {
                 setLoading(false);
             }
         };
@@ -43,21 +57,6 @@ function ProfileSettingsPage() {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
-
-    // Default profile data for fallback
-    const defaultProfileData = {
-        nickname: 'Default User',
-        school: 'Default School',
-        email: 'default@example.com',
-        phone: '+254 700 000 000',
-        bio: 'A passionate student dedicated to making a difference.',
-        socialMedia: {
-            twitter: 'https://twitter.com/default',
-            linkedin: 'https://linkedin.com/in/default',
-        },
-        emailNotifications: true,
-        profilePicture: 'https://zos.alipayobjects.com/rmsportal/jkjgkEIFvnwkEwmiJDEkeCE.png', // Placeholder image
-    };
 
     // Show modal for updating profile
     const showModal = () => {
@@ -74,7 +73,7 @@ function ProfileSettingsPage() {
         setLoading(true);
         setError(null);
         try {
-            // Simulate API call
+            // Simulate API call to update profile
             await new Promise((resolve) => setTimeout(resolve, 1000));
 
             setProfileData(values); // Update local state
@@ -159,7 +158,7 @@ function ProfileSettingsPage() {
                         Profile Settings
                     </Title>
                     <Paragraph style={{ marginBottom: '20px', textAlign: 'center' }}>
-                        Manage your profile information and preferences.
+                        Manage your profile information.
                     </Paragraph>
                 </div>
 
@@ -179,28 +178,22 @@ function ProfileSettingsPage() {
                                     icon={<UserOutlined />}
                                 />
                                 <Title level={3} style={{ color: 'maroon', marginTop: 16 }}>
-                                    {(error ? defaultProfileData : profileData)?.nickname}
+                                    {(error ? defaultProfileData : profileData)?.name}
                                 </Title>
-                                <Text type="secondary">{(error ? defaultProfileData : profileData)?.school}</Text>
+                                <Text type="secondary">Admission Number: {(error ? defaultProfileData : profileData)?.admissionNumber}</Text>
                             </div>
                         </Col>
                         <Col xs={24} md={16}>
                             <Card>
-                                <Title level={4} style={{ color: 'maroon', marginBottom: 16 }}>About Me</Title>
+                                <Title level={4} style={{ color: 'maroon', marginBottom: 16 }}>Profile Details</Title>
                                 <Paragraph>
-                                    <Text strong>Bio:</Text> {(error ? defaultProfileData : profileData)?.bio || 'No bio available.'}
+                                    <Text strong>Name:</Text> {(error ? defaultProfileData : profileData)?.fullName}
                                 </Paragraph>
                                 <Paragraph>
-                                    <MailOutlined style={{ marginRight: 8 }} /> {(error ? defaultProfileData : profileData)?.email}
+                                    <Text strong>Mobile Number:</Text> {(error ? defaultProfileData : profileData)?.mobileNumber}
                                 </Paragraph>
                                 <Paragraph>
-                                    <PhoneOutlined style={{ marginRight: 8 }} /> {(error ? defaultProfileData : profileData)?.phone}
-                                </Paragraph>
-                                <Paragraph>
-                                    <GlobalOutlined style={{ marginRight: 8 }} />
-                                    <a href={(error ? defaultProfileData : profileData)?.socialMedia?.twitter} target="_blank" rel="noopener noreferrer">Twitter</a>
-                                    {' | '}
-                                    <a href={(error ? defaultProfileData : profileData)?.socialMedia?.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                                    <Text strong>Admission Number:</Text> {(error ? defaultProfileData : profileData)?.admissionNumber}
                                 </Paragraph>
                             </Card>
                         </Col>
@@ -214,7 +207,11 @@ function ProfileSettingsPage() {
                         onClick={showModal}
                         icon={<EditOutlined />}
                         disabled={error}
-                        style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}
+                        style={{
+                            background: '#b5e487',
+                            borderColor: 'maroon',
+                            color: 'black'
+                        }}
                     >
                         Update Profile
                     </Button>
@@ -237,22 +234,18 @@ function ProfileSettingsPage() {
                         autoComplete="off"
                     >
                         <Form.Item
-                            label={<Text strong>Nickname</Text>}
-                            name="nickname"
-                            rules={[{ required: true, message: 'Please enter your nickname!' }]}
+                            label={<Text strong>Name</Text>}
+                            name="name"
+                            rules={[{ required: true, message: 'Please enter your name!' }]}
                         >
                             <Input disabled={error} />
                         </Form.Item>
                         <Form.Item
-                            label={<Text strong>School/Faculty</Text>}
-                            name="school"
-                            rules={[{ required: true, message: 'Please select your school/faculty!' }]}
+                            label={<Text strong>Mobile Number</Text>}
+                            name="mobileNumber"
+                            rules={[{ required: true, message: 'Please enter your mobile number!' }]}
                         >
-                            <Select disabled={error}>
-                                <Select.Option value="medicine">School of Medicine</Select.Option>
-                                <Select.Option value="engineering">School of Engineering</Select.Option>
-                                {/* Add more options */}
-                            </Select>
+                            <Input disabled={error} />
                         </Form.Item>
                         <Form.Item
                             label={<Text strong>Profile Picture</Text>}
@@ -267,16 +260,11 @@ function ProfileSettingsPage() {
                                 onChange={handleUploadChange}
                                 disabled={error}
                             >
-                                {((error ? defaultProfileData : profileData) || {}).profilePicture ? <img src={((error ? defaultProfileData : profileData) || {}).profilePicture} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
+                                {((error ? defaultProfileData : profileData) || {}).profilePicture ? (
+                                    <img src={((error ? defaultProfileData : profileData) || {}).profilePicture} alt="avatar" style={{ width: '100%' }} />
+                                ) : uploadButton}
                             </Upload>
                             {uploadError && <Alert message={`Upload Error: ${uploadError}`} type="error" showIcon />}
-                        </Form.Item>
-                        <Form.Item
-                            name="emailNotifications"
-                            label={<Text strong>Email Notifications</Text>}
-                            valuePropName="checked"
-                        >
-                            <Switch disabled={error} />
                         </Form.Item>
                         <Form.Item>
                             <Button
@@ -284,7 +272,11 @@ function ProfileSettingsPage() {
                                 htmlType="submit"
                                 loading={loading}
                                 disabled={loading || error}
-                                style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}
+                                style={{
+                                    background: '#b5e487',
+                                    borderColor: 'maroon',
+                                    color: 'black'
+                                }}
                             >
                                 Save Changes
                             </Button>
@@ -299,7 +291,11 @@ function ProfileSettingsPage() {
                     <Button
                         type="primary"
                         disabled={error}
-                        style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}
+                        style={{
+                            background: '#b5e487',
+                            borderColor: 'maroon',
+                            color: 'black'
+                        }}
                     >
                         Apply Now
                     </Button>

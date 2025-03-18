@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Input, Table, Button, Alert, Spin, Typography, Card } from 'antd';
+import { Row, Col, Input, Button, Alert, Typography, Card, Table } from 'antd';
 import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import MemberLayout from '../../layout/MemberLayout';
+import { API_URL } from '../../services/api';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -14,20 +15,49 @@ function ContributionHistoryPage() {
     const [filteredContributions, setFilteredContributions] = useState([]);
     const [isMobile, setIsMobile] = useState(false);
 
-    // Fetch contributions data
+    // Fetch contributions data with authentication
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        };
+    };
+
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
-                const response = await fetch('http://localhost:5000/api/member/contributions');
+                const response = await fetch(`${API_URL}/member/contributions`, {
+                    headers: getAuthHeaders(),
+                });
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorData = await response.json();
+                    if (errorData.error === "Contribution is not defined") {
+                        // Handle case where the user has no contributions
+                        setContributions([]);
+                        setFilteredContributions([]);
+                        setError(null); // No error, just no contributions
+                    } else {
+                        throw new Error(errorData.message || 'Failed to fetch contributions');
+                    }
+                } else {
+                    const data = await response.json();
+                    const formattedContributions = data.map(contribution => ({
+                        id: contribution._id,
+                        campaign: contribution.campaign?.title || 'Unknown Campaign',
+                        date: contribution.date || contribution.createdAt,
+                        amount: contribution.amount,
+                        receipt: contribution.receiptUrl || '#',
+                    }));
+
+                    setContributions(formattedContributions);
+                    setFilteredContributions(formattedContributions);
                 }
-                const data = await response.json();
-                setContributions(data);
-                setFilteredContributions(data);
-                setLoading(false);
             } catch (e) {
                 setError(e.message);
+            } finally {
                 setLoading(false);
             }
         };
@@ -43,16 +73,10 @@ function ContributionHistoryPage() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Default contributions for fallback
-    const defaultContributions = [
-        { id: 1, campaign: 'Default Medical Fund for Student A', date: '2023-11-15', amount: 5000, receipt: '#' },
-        { id: 2, campaign: 'Default Education Support for Student B', date: '2023-10-28', amount: 2000, receipt: '#' },
-    ];
-
     // Handle search functionality
     const handleSearch = (value) => {
         setSearchText(value);
-        const filteredData = (error ? defaultContributions : contributions).filter((contribution) =>
+        const filteredData = contributions.filter((contribution) =>
             contribution.campaign.toLowerCase().includes(value.toLowerCase()) ||
             (contribution.date && moment(contribution.date).format('MMMM DD, YYYY').toLowerCase().includes(value.toLowerCase())) ||
             contribution.amount.toString().includes(value)
@@ -63,7 +87,7 @@ function ContributionHistoryPage() {
     // Clear search input
     const clearSearch = () => {
         setSearchText('');
-        setFilteredContributions(error ? defaultContributions : contributions);
+        setFilteredContributions(contributions);
     };
 
     // Table columns
@@ -77,7 +101,7 @@ function ContributionHistoryPage() {
             title: 'Date',
             dataIndex: 'date',
             key: 'date',
-            render: (text) => text ? moment(text).format('MMMM DD, YYYY') : 'N/A',
+            render: (text) => (text ? moment(text).format('MMMM DD, YYYY') : 'N/A'),
         },
         {
             title: 'Amount (Ksh)',
@@ -90,7 +114,14 @@ function ContributionHistoryPage() {
             key: 'receipt',
             render: (text, record) => (
                 record.receipt ? (
-                    <Button type="link" href={record.receipt} target="_blank" rel="noopener noreferrer" disabled={error} style={{ color: 'maroon' }}>
+                    <Button
+                        type="link"
+                        href={record.receipt}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        disabled={error}
+                        style={{ color: 'maroon' }}
+                    >
                         View Receipt
                     </Button>
                 ) : (
@@ -109,12 +140,29 @@ function ContributionHistoryPage() {
 
     // Render contributions as cards for mobile
     const renderContributionCards = () => {
+        if (filteredContributions.length === 0) {
+            return (
+                <div style={{ padding: '24px', textAlign: 'center', background: '#f9f9f9', borderRadius: 8 }}>
+                    <Text type="secondary">
+                        You have not made any contributions yet. Start contributing to campaigns to see your activity here.
+                    </Text>
+                </div>
+            );
+        }
+
         return filteredContributions.map((contribution) => (
             <Card
                 key={contribution.id}
-                style={{ marginBottom: 16, borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}
+                style={{
+                    marginBottom: 16,
+                    borderRadius: 8,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    padding: isMobile ? '16px' : '24px',
+                }}
             >
-                <Title level={5} style={{ color: 'maroon' }}>{contribution.campaign}</Title>
+                <Title level={5} style={{ color: 'maroon', marginBottom: 8 }}>
+                    {contribution.campaign}
+                </Title>
                 <Text strong>Date:</Text> {moment(contribution.date).format('MMMM DD, YYYY')}
                 <br />
                 <Text strong>Amount:</Text> Ksh {contribution.amount.toLocaleString()}
@@ -131,7 +179,9 @@ function ContributionHistoryPage() {
                         View Receipt
                     </Button>
                 ) : (
-                    <Text type="secondary" style={{ marginTop: 16 }}>No receipt available</Text>
+                    <Text type="secondary" style={{ marginTop: 16 }}>
+                        No receipt available
+                    </Text>
                 )}
             </Card>
         ));
@@ -171,7 +221,7 @@ function ContributionHistoryPage() {
                         prefix={<SearchOutlined />}
                         value={searchText}
                         onChange={(e) => handleSearch(e.target.value)}
-                        disabled={error}
+                        disabled={error || loading}
                         style={{ maxWidth: 600, marginBottom: 16 }}
                     />
                     {searchText && (
@@ -179,7 +229,7 @@ function ContributionHistoryPage() {
                             icon={<CloseOutlined />}
                             onClick={clearSearch}
                             style={{ marginLeft: 8 }}
-                            disabled={error}
+                            disabled={error || loading}
                         />
                     )}
                 </div>
@@ -189,13 +239,21 @@ function ContributionHistoryPage() {
                     {isMobile ? (
                         renderContributionCards()
                     ) : (
-                        <Table
-                            columns={columns}
-                            dataSource={filteredContributions}
-                            rowKey="id"
-                            aria-label="Contribution History"
-                            pagination={{ pageSize: 10 }}
-                        />
+                        filteredContributions.length > 0 ? (
+                            <Table
+                                columns={columns}
+                                dataSource={filteredContributions}
+                                rowKey="id"
+                                aria-label="Contribution History"
+                                pagination={{ pageSize: 10 }}
+                            />
+                        ) : (
+                            <div style={{ padding: '24px', textAlign: 'center', background: '#f9f9f9', borderRadius: 8 }}>
+                                <Text type="secondary">
+                                    You have not made any contributions yet. Start contributing to campaigns to see your activity here.
+                                </Text>
+                            </div>
+                        )
                     )}
                 </div>
             </div>

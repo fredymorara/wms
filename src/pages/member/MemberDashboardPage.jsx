@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Progress, Button, Statistic, InputNumber, Form, Select, Alert, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import MemberLayout from '../../layout/MemberLayout';
+import { API_URL } from '../../services/api';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -17,76 +18,98 @@ const MemberDashboardPage = () => {
     const [contributionSuccess, setContributionSuccess] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
-    // Default data
-    const defaultCampaigns = [
-        {
-            id: 1,
-            title: 'Default Medical Fund for John',
-            description: 'Help John with his default medical expenses',
-            goal: 100000,
-            raised: 60000,
-            contributors: 45,
-        },
-        {
-            id: 2,
-            title: 'Default Education Fund for Jane',
-            description: 'Support Jane\'s default education journey',
-            goal: 50000,
-            raised: 40000,
-            contributors: 62,
-        },
-    ];
-
     // Fetch data from the server
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json' // Good practice
+        };
+    };
+
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
+
+            // Fetch campaigns
             try {
-                const [campaignsResponse, contributionsResponse] = await Promise.all([
-                    fetch('http://localhost:5000/api/member/campaigns'),
-                    fetch('http://localhost:5000/api/member/contributions'),
-                ]);
+                const campaignsResponse = await fetch(`${API_URL}/member/campaigns`, {
+                    headers: getAuthHeaders()
+                });
 
-                if (!campaignsResponse.ok) {
-                    throw new Error(`Campaigns API failed with status: ${campaignsResponse.status}`);
+                if (campaignsResponse.ok) {
+                    const campaignsData = await campaignsResponse.json();
+                    console.log("Raw API data:", campaignsData);
+
+                    const formattedCampaigns = campaignsData.map(campaign => ({
+                        id: campaign._id,
+                        title: campaign.title,
+                        category: campaign.category,
+                        goal: campaign.goalAmount,
+                        raised: campaign.currentAmount,
+                        description: campaign.description,
+                        endDate: campaign.endDate,
+                        status: campaign.status,
+                    }));
+
+                    setCampaigns(formattedCampaigns);
+                    setSelectedCampaign(formattedCampaigns[0]?.id || null);
+                } else {
+                    console.error("Campaign fetch failed with status:", campaignsResponse.status);
+                    setError("Failed to load campaigns");
                 }
-                if (!contributionsResponse.ok) {
-                    throw new Error(`Contributions API failed with status: ${contributionsResponse.status}`);
-                }
-
-                const [campaignsData, contributionsData] = await Promise.all([
-                    campaignsResponse.json(),
-                    contributionsResponse.json(),
-                ]);
-
-                setCampaigns(campaignsData);
-                setSelectedCampaign(campaignsData[0]?.id || null);
-
-                // Map contributions to recent activity
-                const activityData = contributionsData.map(contribution => ({
-                    id: contribution.id,
-                    description: `Contributed KES ${contribution.amount} to ${contribution.campaign}`,
-                    link: `/member/campaigns/${contribution.id}`,
-                    date: contribution.date,
-                }));
-                setRecentActivity(activityData);
             } catch (e) {
-                setError(e.message);
-                setCampaigns(defaultCampaigns);
-                setRecentActivity([]); // No fallback for recent activity
-            } finally {
-                setLoading(false);
+                console.error("Error fetching campaigns:", e);
+                setError("Error loading campaigns: " + e.message);
             }
+
+            // Fetch contributions with better error handling
+            try {
+                const contributionsResponse = await fetch(`${API_URL}/member/contributions`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (contributionsResponse.ok) {
+                    const contributionsData = await contributionsResponse.json();
+
+                    const activityData = contributionsData.map(contribution => ({
+                        id: contribution._id,
+                        description: `Contributed KES ${contribution.amount} to ${contribution.campaign?.title}`,
+                        date: contribution.date || contribution.createdAt,
+                    }));
+                    setRecentActivity(activityData);
+                } else {
+                    // Parse the error response
+                    const errorData = await contributionsResponse.json();
+                    console.log("Contributions error:", errorData);
+
+                    // Check if it's the "Contribution is not defined" error
+                    if (errorData.error === "Contribution is not defined") {
+                        console.log("No contributions yet - this is expected for new users");
+                        setRecentActivity([]);  // Set empty array for new users
+                    } else {
+                        console.error("Contributions fetch failed:", errorData.message);
+                        setRecentActivity([]);
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching contributions:", e);
+                setRecentActivity([]);
+            }
+
+            setLoading(false);
         };
 
         fetchData();
     }, []);
 
     // Handle contribution submission
+    // Handle contribution submission
     const onFinish = async (values) => {
         try {
-            const response = await fetch('http://localhost:5000/api/member/contribute', {
+            const response = await fetch(`${API_URL}/member/contribute`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({
                     campaignId: selectedCampaign,
                     amount: contributionAmount,
@@ -96,29 +119,47 @@ const MemberDashboardPage = () => {
             if (response.ok) {
                 setContributionSuccess(true);
 
-                // Fetch updated campaigns and contributions
-                const [campaignsResponse, contributionsResponse] = await Promise.all([
-                    fetch('http://localhost:5000/api/member/campaigns'),
-                    fetch('http://localhost:5000/api/member/contributions'),
-                ]);
+                // Get the selected campaign info from our local state
+                const selectedCampaignInfo = campaigns.find(c => c.id === selectedCampaign);
 
-                const [campaignsData, contributionsData] = await Promise.all([
-                    campaignsResponse.json(),
-                    contributionsResponse.json(),
-                ]);
-
-                setCampaigns(campaignsData);
-
-                // Update recent activity with new contribution
+                // Create a new activity entry directly without fetching from the API
                 const newActivity = {
-                    id: contributionsData.length + 1,
-                    description: `Contributed KES ${contributionAmount} to ${campaigns.find(c => c.id === selectedCampaign)?.title}`,
-                    link: `/member/campaigns/${selectedCampaign}`,
-                    date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+                    id: Date.now(), // Temporary ID until we refresh
+                    description: `Contributed KES ${contributionAmount} to ${selectedCampaignInfo?.title || 'a campaign'}`,
+                    date: new Date().toISOString(),
                 };
-                setRecentActivity([newActivity, ...recentActivity]);
+
+                // Update local state with the new activity
+                setRecentActivity(prev => [newActivity, ...prev]);
+
+                // Refresh campaign data to show updated amounts
+                try {
+                    const campaignsResponse = await fetch(`${API_URL}/member/campaigns`, {
+                        headers: getAuthHeaders()
+                    });
+
+                    if (campaignsResponse.ok) {
+                        const campaignsData = await campaignsResponse.json();
+
+                        const formattedCampaigns = campaignsData.map(campaign => ({
+                            id: campaign._id,
+                            title: campaign.title,
+                            category: campaign.category,
+                            goal: campaign.goalAmount,
+                            raised: campaign.currentAmount,
+                            description: campaign.description,
+                            endDate: campaign.endDate,
+                            status: campaign.status,
+                        }));
+
+                        setCampaigns(formattedCampaigns);
+                    }
+                } catch (e) {
+                    console.error("Error refreshing campaigns after contribution:", e);
+                }
             } else {
-                setError('Contribution failed. Please try again.');
+                const errorData = await response.json();
+                setError(errorData.message || 'Contribution failed');
             }
         } catch (e) {
             setError(e.message);
@@ -190,45 +231,60 @@ const MemberDashboardPage = () => {
                     </div>
 
                     <Row gutter={[24, 24]}>
-                        {displayedCampaigns.map(campaign => (
-                            <Col key={campaign.id} xs={24} md={12} lg={8}>
-                                <div style={{
-                                    border: '1px solid',
-                                    borderRadius: 8,
-                                    padding: 16,
-                                    marginBottom: 16,
-                                }}>
-                                    <Title level={4}>
-                                        {campaign.title}
-                                    </Title>
-                                    <Progress
-                                        percent={(campaign.raised / campaign.goal) * 100}
-                                        strokeColor="maroon"
-                                        style={{ margin: '16px 0' }}
-                                    />
-                                    <Row gutter={16}>
-                                        <Col span={12}>
-                                            <Statistic title="Target" value={campaign.goal} prefix="KES" />
-                                        </Col>
-                                        <Col span={12}>
-                                            <Statistic title="Raised" value={campaign.raised} prefix="KES" />
-                                        </Col>
-                                    </Row>
-                                    <Button
-                                        block
-                                        type="primary"
-                                        style={{
-                                            background: '#b5e487',
-                                            borderColor: 'maroon',
-                                            color: 'black',
-                                            marginTop: 16,
-                                        }}
-                                    >
-                                        Donate Now
-                                    </Button>
-                                </div>
+                        {campaigns.length > 0 ? (
+                            displayedCampaigns.map(campaign => (
+                                <Col key={campaign.id} xs={24} md={12} lg={8}>
+                                    <div style={{
+                                        border: '1px solid',
+                                        borderRadius: 8,
+                                        padding: 16,
+                                        marginBottom: 16,
+                                    }}>
+                                        <Title level={4}>
+                                            {campaign.title}
+                                        </Title>
+                                        <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                                            {campaign.category}
+                                        </Text>
+                                        <Progress
+                                            percent={Math.min(Math.round((campaign.raised / campaign.goal) * 100), 100)}
+                                            status={campaign.raised >= campaign.goal ? "success" : "active"}
+                                            strokeColor="maroon"
+                                            style={{ margin: '16px 0' }}
+                                        />
+                                        <Row gutter={16}>
+                                            <Col span={12}>
+                                                <Statistic title="Target" value={campaign.goal} prefix="KES" />
+                                            </Col>
+                                            <Col span={12}>
+                                                <Statistic title="Raised" value={campaign.raised} prefix="KES" />
+                                            </Col>
+                                        </Row>
+                                        <Button
+                                            block
+                                            type="primary"
+                                            style={{
+                                                background: '#b5e487',
+                                                borderColor: 'maroon',
+                                                color: 'black',
+                                                marginTop: 16,
+                                            }}
+                                        >
+                                            Donate Now
+                                        </Button>
+                                    </div>
+                                </Col>
+                            ))
+                        ) : (
+                            <Col span={24}>
+                                <Alert
+                                    message="No active campaigns"
+                                    description="There are currently no active campaigns to display."
+                                    type="info"
+                                />
                             </Col>
-                        ))}
+                        )
+                        }
                     </Row>
                 </div>
 
@@ -295,7 +351,8 @@ const MemberDashboardPage = () => {
                     </div>
 
                     <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-                        {recentActivity.map(activity => (
+                        {recentActivity.length > 0 ? (
+                            recentActivity.map(activity => (
                             <div key={activity.id} style={{
                                 padding: '12px 0',
                                 borderBottom: '1px solid #f0f0f0',
@@ -305,10 +362,23 @@ const MemberDashboardPage = () => {
                             }}>
                                 <Text style={{ flex: 1 }}>{activity.description}</Text>
                                 <Text type="secondary" style={{ marginLeft: 16 }}>
-                                    {new Date(activity.date).toLocaleDateString()}
+                                    {new Date(activity.date).toLocaleDateString('en-GB')}
                                 </Text>
                             </div>
-                        ))}
+                            ))
+                        ) : (
+                            <div style={{
+                                padding: '24px',
+                                textAlign: 'center',
+                                background: '#f9f9f9',
+                                borderRadius: 8,
+                            }}>
+                                <Text type="secondary">
+                                    No contribution history yet. Start contributing to campaigns to see your activity here.
+                                </Text>
+                            </div>
+                        )
+                        }
                     </div>
                 </div>
 

@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import PrivateRoute from './components/PrivateRoute.jsx';
+import { BrowserRouter as Router, Routes, Route, BrowserRouter } from 'react-router-dom';
 //default
 import LandingPage from './pages/LandingPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
@@ -21,28 +22,36 @@ import MemberDashboardPage from './pages/member/MemberDashboardPage.jsx';
 
 function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        {/*Member Section */}
-        <Route path="/member/dashboard" element={<MemberDashboardPage />} />
-        <Route path="/member/history" element={<ContributionHistoryPage />} />
-        <Route path="/member/profile" element={<ProfileSettingsPage />} />
-        <Route path="/member/campaigns" element={<CampaignsPage />} />
-        <Route path="/member/help" element={<HelpPage />} />
-        {/*Admin Section */}
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/campaigns" element={<CampaignManagementPage />} />
-        <Route path="/admin/funds" element={<FundManagementPage />} />
-        <Route path="/admin/reports" element={<ReportsPage />} />
-        <Route path="/admin/profile" element={<AdminProfilePage />} />
-        {/*Default */}
+
+        {/*Protected Routes*/}
+        <Route element={<PrivateRoute allowedRoles={['member']} />} >
+          {/*Member Section */}
+          <Route path="/member/dashboard" element={<MemberDashboardPage />} />
+          <Route path="/member/history" element={<ContributionHistoryPage />} />
+          <Route path="/member/profile" element={<ProfileSettingsPage />} />
+          <Route path="/member/campaigns" element={<CampaignsPage />} />
+          <Route path="/member/help" element={<HelpPage />} />
+        </Route>
+
+        <Route element={<PrivateRoute allowedRoles={['admin']} />} >
+          {/*Admin Section */}
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/campaigns" element={<CampaignManagementPage />} />
+          <Route path="/admin/funds" element={<FundManagementPage />} />
+          <Route path="/admin/reports" element={<ReportsPage />} />
+          <Route path="/admin/profile" element={<AdminProfilePage />} />
+          {/*Default */}
+        </Route>
+
         <Route path="/404" element={<NotFoundPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </Router>
+    </BrowserRouter >
   );
 }
 export default App;

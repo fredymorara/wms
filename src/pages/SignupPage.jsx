@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Layout, Button, Typography, Form, Input, message } from 'antd';
+import { Layout, Button, Typography, Form, Input, Alert } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
-import logo from '../assets/kabu-logo-Beveled-shadow.png'; // Make sure to import the logo
+import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
+import logo from '../assets/kabu-logo-Beveled-shadow.png';
+import { register } from '../services/api'; // Import the register function from api.js
 
 const { Header, Content, Footer } = Layout;
 const { Title } = Typography;
@@ -10,38 +11,46 @@ const { Title } = Typography;
 const SignupPage = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const [feedback, setFeedback] = useState({ type: '', message: '' });
 
     const onFinish = async (values) => {
-        const response = await simulateSignup(values);
+        const { email, password, confirmPassword, fullName, admissionNumber } = values;
 
-        if (response.success) {
-            message.success('Signup successful! Please login.');
-            navigate('/login');
-        } else {
-            message.error(response.message || 'Signup failed. Please try again.');
-        }
-    };
-
-    const simulateSignup = async (values) => {
-        const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-
-        if (!emailRegex.test(values.email)) {
-            return { success: false, message: 'Invalid email format.' };
+        if (!email.endsWith('@kabarak.ac.ke')) {
+            setFeedback({ type: 'error', message: 'Only emails ending with @kabarak.ac.ke are allowed.' });
+            return;
         }
 
-        if (values.password.length < 6) {
-            return { success: false, message: 'Password must be at least 6 characters long.' };
+        if (password !== confirmPassword) {
+            setFeedback({ type: 'error', message: 'Passwords do not match.' });
+            return;
         }
 
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                if (!values.email.endsWith('@yourstudentsdomain.com')) {
-                    resolve({ success: false, message: 'Please use your university email address.' });
-                    return;
-                }
-                resolve({ success: true });
-            }, 1000);
-        });
+        try {
+            const response = await register({
+                email,
+                password,
+                fullName,
+                admissionNumber,
+                role: 'member',
+            });
+
+            if (response.user) {
+                setFeedback({ type: 'success', message: 'Registration successful! Please login.' });
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+            } else {
+                setFeedback({ type: 'error', message: response.message || 'Signup failed. Please try again.' });
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            if (error.response && error.response.data && error.response.data.message === 'User already exists') {
+                setFeedback({ type: 'error', message: 'A user with this email or admission number already exists.' });
+            } else {
+                setFeedback({ type: 'error', message: error.message || 'Signup failed. Please try again.' });
+            }
+        }
     };
 
     return (
@@ -94,28 +103,104 @@ const SignupPage = () => {
                 <div
                     style={{
                         maxWidth: '400px',
-                        width: '90%',
-                        padding: '2rem',
+                        width: '95%',
+                        padding: '1.3rem',
                         borderRadius: 10,
                         backgroundColor: 'rgba(255, 255, 255, 0.7)',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                     }}
                 >
-                    <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '1.5rem' }}>
-                        Sign Up
-                    </Title>
+                    <div>
+                        <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '0.3rem' }}>
+                            Sign Up
+                        </Title>
+                        <img
+                            src={logo}
+                            alt="Kabarak University Logo"
+                            style={{
+                                height: '45px',
+                                margin: 'auto',
+                                marginBottom: '1.5rem',
+                            }}
+                        />
+                    </div>
+
+                    {/* Feedback Message */}
+                    {feedback.message && (
+                        <Alert
+                            message={feedback.message}
+                            type={feedback.type} // "success" or "error"
+                            showIcon
+                            style={{ marginBottom: '1.5rem' }}
+                        />
+                    )}
+
                     <Form form={form} name="signup_form" initialValues={{ remember: true }} onFinish={onFinish}>
-                        <Form.Item name="email" rules={[{ required: true, message: 'Please enter your email!' }, { type: 'email', message: 'Please enter a valid email!' }]}>
+                        <Form.Item
+                            name="fullName"
+                            rules={[
+                                { required: true, message: 'Please enter your full name!' },
+                            ]}
+                        >
+                            <Input prefix={<UserOutlined />} placeholder="Full Name" />
+                        </Form.Item>
+                        <Form.Item
+                            name="admissionNumber"
+                            rules={[
+                                { required: true, message: 'Please enter your admission number!' },
+                            ]}
+                        >
+                            <Input prefix={<IdcardOutlined />} placeholder="Admission Number" />
+                        </Form.Item>
+                        <Form.Item
+                            name="email"
+                            rules={[
+                                { required: true, message: 'Please enter your email!' },
+                                { type: 'email', message: 'Please enter a valid email!' },
+                                {
+                                    validator: (_, value) => {
+                                        if (value && !value.endsWith('@kabarak.ac.ke')) {
+                                            return Promise.reject('Only @kabarak.ac.ke emails are allowed.');
+                                        }
+                                        return Promise.resolve();
+                                    },
+                                },
+                            ]}
+                        >
                             <Input prefix={<MailOutlined />} placeholder="Email" />
                         </Form.Item>
-                        <Form.Item name="password" rules={[{ required: true, message: 'Please enter your password!' }]}>
+                        <Form.Item
+                            name="password"
+                            rules={[
+                                { required: true, message: 'Please enter your password!' },
+                                { min: 6, message: 'Password must be at least 6 characters long.' },
+                            ]}
+                        >
                             <Input prefix={<LockOutlined />} type="password" placeholder="Password" />
                         </Form.Item>
-                        <Form.Item name="confirmPassword" dependencies={['password']} rules={[{ required: true, message: 'Please confirm your password!' }, ({ getFieldValue }) => ({ validator(_, value) { if (!value || getFieldValue('password') === value) { return Promise.resolve(); } return Promise.reject(new Error('The two passwords that you entered do not match!')); }, }),]}>
+                        <Form.Item
+                            name="confirmPassword"
+                            dependencies={['password']}
+                            rules={[
+                                { required: true, message: 'Please confirm your password!' },
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        if (!value || getFieldValue('password') === value) {
+                                            return Promise.resolve();
+                                        }
+                                        return Promise.reject(new Error('The two passwords do not match!'));
+                                    },
+                                }),
+                            ]}
+                        >
                             <Input prefix={<LockOutlined />} type="password" placeholder="Confirm Password" />
                         </Form.Item>
                         <Form.Item>
-                            <Button type="primary" htmlType="submit" style={{ width: '100%', backgroundColor: '#b5e487', color: 'black', borderColor: 'maroon' }}>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                style={{ width: '100%', backgroundColor: '#b5e487', color: 'black', borderColor: 'maroon' }}
+                            >
                                 Sign Up
                             </Button>
                         </Form.Item>

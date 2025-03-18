@@ -22,7 +22,7 @@ const AdminLayout = ({ children }) => {
         <BaseRoleLayout
             roleConfig={{
                 menuItems,
-                apiEndpoint: 'http://localhost:5000/api/admin/profile', // Endpoint to fetch Admin profile data
+                apiEndpointPath: '/admin/profile', // Endpoint to fetch Admin profile data
                 showUserProfile: true // Decide if you want to show user profile in Admin layout too
             }}
         >

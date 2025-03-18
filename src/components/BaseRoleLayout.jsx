@@ -3,6 +3,7 @@ import { Layout, Menu, Breadcrumb, Avatar, theme } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import { MenuOutlined, CloseOutlined, UserOutlined } from '@ant-design/icons';
 import logo from '../assets/Kabarak_University_Extended_logo_910x256.png';
+import { API_URL } from '../services/api'; // Import API_URL
 
 const { Header, Content, Footer } = Layout;
 
@@ -10,7 +11,7 @@ const BaseRoleLayout = ({
     children,
     roleConfig: {
         menuItems,
-        apiEndpoint,
+        apiEndpointPath,
         showUserProfile = true
     }
 }) => {
@@ -32,7 +33,15 @@ const BaseRoleLayout = ({
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await fetch(apiEndpoint);
+                const fullApiEndpoint = `${API_URL}${apiEndpointPath}
+            `
+                const token = localStorage.getItem('token')
+                const response = await fetch(fullApiEndpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const userData = await response.json();
                 setUser(userData);
@@ -40,8 +49,8 @@ const BaseRoleLayout = ({
                 console.error('Error fetching user data:', error);
             }
         };
-        if (apiEndpoint) fetchUser();
-    }, [apiEndpoint]);
+        if (apiEndpointPath) fetchUser();
+    }, [apiEndpointPath]);
 
     const getSelectedKeys = () => [location.pathname];
 
