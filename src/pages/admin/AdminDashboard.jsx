@@ -7,16 +7,16 @@ import {
     UsergroupAddOutlined,
     FileTextOutlined,
 } from '@ant-design/icons';
-import { API_URL } from '../../services/api';
+import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
 
 const { Title, Paragraph } = Typography;
 
 const AdminDashboard = () => {
-    const [dashboardMetrics, setDashboardMetrics] = useState(null); // State to hold metrics from API
+    const [dashboardMetrics, setDashboardMetrics] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const getAuthHeaders = () => { // Helper function to get auth headers
+    const getAuthHeaders = () => {
         const token = localStorage.getItem('token');
         return {
             'Authorization': `Bearer ${token}`,
@@ -29,14 +29,14 @@ const AdminDashboard = () => {
             setLoading(true);
             setError(null);
             try {
-                const response = await fetch(`${API_URL}/admin/dashboard-metrics`, { // Fetch from API endpoint
-                    headers: getAuthHeaders() // Include token
+                const response = await fetch(`${API_URL}/admin/dashboard-metrics`, {
+                    headers: getAuthHeaders()
                 });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setDashboardMetrics(data); // **Set dashboardMetrics state with API data**
+                setDashboardMetrics(data);
             } catch (e) {
                 setError(e.message);
             } finally {
@@ -62,13 +62,13 @@ const AdminDashboard = () => {
                 {loading && <Spin tip="Loading Dashboard Metrics..." style={{ display: 'block', marginBottom: 24 }} />}
                 {error && <Alert message={`Error fetching dashboard metrics: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: 24 }} />}
 
-                {dashboardMetrics && !loading && !error && ( // **Conditional rendering - only show metrics if data is loaded and no error**
+                {dashboardMetrics && !loading && !error && (
                     <Row gutter={24}>
                         <Col xs={24} sm={12} md={6} key={0}>
                             <Card style={{ backgroundColor: '#f7f5f5', borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
                                 <Statistic
                                     title="Total Active Campaigns"
-                                    value={dashboardMetrics.activeCampaignsCount} // <-- **Use data from dashboardMetrics**
+                                    value={dashboardMetrics.activeCampaignsCount}
                                     precision={0}
                                     prefix={<FundOutlined />}
                                     valueStyle={{ color: 'maroon', fontSize: '1.5rem' }}
@@ -80,7 +80,7 @@ const AdminDashboard = () => {
                             <Card style={{ backgroundColor: '#f7f5f5', borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
                                 <Statistic
                                     title="Pending Campaign Approvals"
-                                    value={dashboardMetrics.pendingApprovalsCount} // <-- **Use data from dashboardMetrics**
+                                    value={dashboardMetrics.pendingApprovalsCount}
                                     precision={0}
                                     prefix={<FileTextOutlined />}
                                     valueStyle={{ color: '#d46b08', fontSize: '1.5rem' }}
@@ -92,7 +92,7 @@ const AdminDashboard = () => {
                             <Card style={{ backgroundColor: '#f7f5f5', borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
                                 <Statistic
                                     title="Total System Members"
-                                    value={dashboardMetrics.totalMembersCount} // <-- **Use data from dashboardMetrics**
+                                    value={dashboardMetrics.totalMembersCount}
                                     precision={0}
                                     prefix={<UsergroupAddOutlined />}
                                     valueStyle={{ color: '#389e0d', fontSize: '1.5rem' }}
@@ -104,7 +104,7 @@ const AdminDashboard = () => {
                             <Card style={{ backgroundColor: '#f7f5f5', borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
                                 <Statistic
                                     title="Total Funds Raised (All Campaigns)"
-                                    value={dashboardMetrics.totalFundsRaised} // <-- **Use data from dashboardMetrics**
+                                    value={dashboardMetrics.totalFundsRaised}
                                     precision={0}
                                     prefix={<DashboardOutlined />} // Consider a more financial icon
                                     valueStyle={{ color: '#08979c', fontSize: '1.5rem' }}
@@ -161,9 +161,6 @@ const AdminDashboard = () => {
                         </Col>
                     </Row>
                 </div>
-
-                {/* Add more dashboard sections as needed - e.g., Recent Activities, Charts, etc. */}
-
             </div>
         </AdminLayout>
     );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '../../layout/AdminLayout'; // Adjust path if needed
+import AdminLayout from '../../layout/AdminLayout';
 import {
     Typography,
     Form,
@@ -8,10 +8,14 @@ import {
     Avatar,
     Spin,
     Alert,
+    Typography as AntTypography, // Import Typography again as Text
+    message, // Import message
 } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
+import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
 
 const { Title, Paragraph } = Typography;
+const { Text } = AntTypography; // Use Text from AntTypography
 
 const AdminProfilePage = () => {
     const [profileData, setProfileData] = useState(null);
@@ -22,14 +26,22 @@ const AdminProfilePage = () => {
     const [passwordChangeError, setPasswordChangeError] = useState(null);
     const [form] = Form.useForm();
 
-    // Fetch Admin profile data on component mount (Placeholder - replace with your API endpoint)
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    };
+
     useEffect(() => {
         const fetchProfile = async () => {
             setLoading(true);
             setError(null);
             try {
-                // Replace 'http://localhost:5000/api/admin/profile' with your actual API endpoint to get admin profile
-                const response = await fetch('http://localhost:5000/api/admin/profile');
+                const response = await fetch(`${API_URL}/admin/profile`, { // Use API_URL here
+                    headers: getAuthHeaders()
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -50,26 +62,23 @@ const AdminProfilePage = () => {
         setPasswordChangeError(null);
         setPasswordChangeSuccess(null);
         try {
-            // Simulate API call for password change - replace with your actual API endpoint
-            // Replace 'http://localhost:5000/api/admin/change-password' with your actual API endpoint to change password
-            const response = await fetch('http://localhost:5000/api/admin/change-password', {
+            const response = await fetch(`${API_URL}/admin/change-password`, { // Use API_URL here
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(values), // Send currentPassword and newPassword
+                headers: getAuthHeaders(), // Include auth headers
+                body: JSON.stringify(values),
             });
 
             if (!response.ok) {
-                const errorData = await response.json(); // Or response.text() if not JSON
+                const errorData = await response.json();
                 throw new Error(errorData.message || `Password change failed: HTTP status ${response.status}`);
             }
 
             setPasswordChangeSuccess('Password changed successfully!');
-            form.resetFields(); // Clear password fields after success
-
+            form.resetFields();
+            message.success('Password changed successfully!'); // Ant Design message for success
         } catch (e) {
             setPasswordChangeError(e.message);
+            message.error(`Password change error: ${e.message}`); // Ant Design message for error
         } finally {
             setPasswordChangeLoading(false);
         }
@@ -78,8 +87,8 @@ const AdminProfilePage = () => {
     const onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);
         setPasswordChangeError('Password change form submission failed. Please check the fields.');
+        message.error('Password change form submission failed. Please check the fields.'); // Ant Design message for form error
     };
-
 
     return (
         <AdminLayout>
@@ -99,11 +108,10 @@ const AdminProfilePage = () => {
                 {profileData && !loading && !error && (
                     <div style={{ maxWidth: 600, margin: '0 auto' }}>
                         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                            <Avatar size={100} icon={<UserOutlined />} src={profileData.profilePicture} /> {/* Display profile picture if available */}
-                            <Title level={4} style={{ marginTop: 16, color: 'maroon' }}>{profileData.fullName || profileData.name || 'Admin User'}</Title> {/* Adjust data keys */}
-                            <Paragraph>{profileData.email}</Paragraph> {/* Adjust data keys */}
+                            <Avatar size={100} icon={<UserOutlined />} src={profileData.profilePicture} />
+                            <Title level={4} style={{ marginTop: 16, color: 'maroon' }}>{profileData.fullName || profileData.name || 'Admin User'}</Title>
+                            <Paragraph>{profileData.email}</Paragraph>
                             <Paragraph>Role: Administrator</Paragraph>
-                            {/* Display other relevant profile information */}
                         </div>
 
                         <div style={{ borderTop: '2px solid #f0f0f0', paddingTop: 24, marginBottom: 24 }}>
@@ -131,7 +139,7 @@ const AdminProfilePage = () => {
                                     name="newPassword"
                                     rules={[
                                         { required: true, message: 'Please enter a new password.' },
-                                        { min: 6, message: 'Password must be at least 6 characters long.' }, // Example validation
+                                        { min: 6, message: 'Password must be at least 6 characters long.' },
                                     ]}
                                 >
                                     <Input.Password placeholder="New Password" />

@@ -18,7 +18,7 @@ export const login = async (credentials) => {
         const response = await axios.post(`${API_URL}/auth/login`, credentials);
         return response.data; // Return { user, token }
     } catch (error) {
-        throw new Error(error.response?.data?.message || 'Login failed');
+        throw new Error(error.response?.data?.message || 'Login failed ... Network error or server is down. ');
     }
 };
 
@@ -50,3 +50,9 @@ export const getActiveCampaigns = async (token) => {
     }
 };
 
+export const getFundsOverview = async () => {
+    return axios.get(`${API_URL}/admin/dashboard-metrics`);
+};
+
+// Frontend components should use:
+//import { getFundsOverview } from './api';

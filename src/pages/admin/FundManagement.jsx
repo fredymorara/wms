@@ -13,8 +13,10 @@ import {
     Space,
     List,
     Card,
+    message, // Import message for notifications
 } from 'antd';
 import { FundOutlined, HistoryOutlined, UserOutlined } from '@ant-design/icons';
+import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
 
 const { Title, Paragraph, Text } = Typography;
 const { TabPane } = Tabs;
@@ -32,18 +34,28 @@ const FundsManagementPage = () => {
     const [isActionLoading, setIsActionLoading] = useState(false); // For Disburse Funds action
     const [isMobile, setIsMobile] = useState(false);
 
-    // Fetch campaign funds data (Placeholder - replace with your API endpoint)
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    };
+
+    // Fetch campaign funds data
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             setError(null);
             try {
-                // Replace 'http://localhost:5000/api/admin/funds-overview' with your actual API endpoint to fetch funds data
-                const response = await fetch('http://localhost:5000/api/admin/funds-overview');
+                const response = await fetch(`${API_URL}/admin/campaigns`, {
+                    headers: getAuthHeaders()
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
+                console.log('Fetched Campaign Data:', data); // Debug the data
                 setCampaignFundsData(data);
             } catch (e) {
                 setError(e.message);
@@ -63,16 +75,16 @@ const FundsManagementPage = () => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-
     const showContributorsModal = async (record) => {
         setSelectedCampaign(record);
         setIsContributorsModalVisible(true);
-        setContributors([]); // Clear previous contributors
-        setLoading(true); // Start loading in modal
+        setContributors([]);
+        setLoading(true);
         setError(null);
         try {
-            // Replace 'http://localhost:5000/api/admin/campaign-contributors/' + record.id with your actual API endpoint
-            const response = await fetch(`http://localhost:5000/api/admin/campaign-contributors/${record.id}`);
+            const response = await fetch(`${API_URL}/admin/campaign-contributors/${record._id}`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -89,18 +101,19 @@ const FundsManagementPage = () => {
         setIsContributorsModalVisible(false);
         setSelectedCampaign(null);
         setContributors([]);
-        setError(null); // Clear error on modal close
+        setError(null);
     };
 
     const showContributionHistoryModal = async (record) => {
         setSelectedCampaign(record);
         setIsContributionHistoryModalVisible(true);
-        setContributionHistory([]); // Clear previous history
-        setLoading(true); // Start loading in modal
+        setContributionHistory([]);
+        setLoading(true);
         setError(null);
         try {
-            // Replace 'http://localhost:5000/api/admin/campaign-contribution-history/' + record.id with your actual API endpoint
-            const response = await fetch(`http://localhost:5000/api/admin/campaign-contribution-history/${record.id}`);
+            const response = await fetch(`${API_URL}/admin/campaign-contribution-history/${record._id}`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -117,18 +130,29 @@ const FundsManagementPage = () => {
         setIsContributionHistoryModalVisible(false);
         setSelectedCampaign(null);
         setContributionHistory([]);
-        setError(null); // Clear error on modal close
+        setError(null);
     };
-
 
     const handleDisburseFunds = async (campaignId) => {
         setIsActionLoading(true);
-        // Implement API call to initiate fund disbursement for campaign with campaignId
-        console.log(`Disbursing funds for campaign with ID: ${campaignId}`);
-        setIsActionLoading(false);
-        // After successful disbursement initiation, refresh campaign data or update UI as needed
-    };
+        try {
+            const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/disburse`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ /* disbursement details if needed */ }), // Add disbursement details if required by API
+            });
+            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to disburse funds'); }
 
+            message.success(`Funds disbursement initiated for campaign ${campaignId}`);
+            // Optionally refresh campaign data after disbursement
+            fetchData(); // Re-fetch campaign data to update UI
+        } catch (error) {
+            setError(`Error disbursing funds: ${error.message}`);
+            message.error(`Error disbursing funds: ${error.message}`);
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
 
     const fundraisingOverviewColumns = [
         {
@@ -145,19 +169,19 @@ const FundsManagementPage = () => {
             title: 'Target (Ksh)',
             dataIndex: 'targetAmount',
             key: 'targetAmount',
-            render: (text) => text.toLocaleString(),
+            render: (text) => (text || 0).toLocaleString(), // Add default value
         },
         {
             title: 'Raised (Ksh)',
             dataIndex: 'currentAmount',
             key: 'currentAmount',
-            render: (text) => text.toLocaleString(),
+            render: (text) => (text || 0).toLocaleString(), // Add default value
         },
         {
             title: '% Raised',
             dataIndex: 'percentageRaised',
             key: 'percentageRaised',
-            render: (percentage) => <Progress percent={percentage} status="active" strokeColor="maroon" />,
+            render: (percentage) => <Progress percent={percentage || 0} status="active" strokeColor="maroon" />, // Add default value
         },
         {
             title: 'Status',
@@ -165,10 +189,10 @@ const FundsManagementPage = () => {
             key: 'status',
             render: (status) => {
                 let color = 'default';
-                let text = status.toUpperCase();
+                let text = status?.toUpperCase() || 'N/A'; // Add default value
                 if (status === 'active') color = 'green';
-                if (status === 'nearing_target') { color = 'blue'; text = 'Nearing Target'; } // Example status
-                if (status === 'awaiting_disbursement') { color = '#d46b08'; text = 'Awaiting Disbursement'; } // Example status
+                if (status === 'nearing_target') { color = 'blue'; text = 'Nearing Target'; }
+                if (status === 'awaiting_disbursement') { color = '#d46b08'; text = 'Awaiting Disbursement'; }
                 return <Tag color={color}>{text}</Tag>;
             },
         },
@@ -184,7 +208,6 @@ const FundsManagementPage = () => {
         },
     ];
 
-
     const awaitingDisbursementColumns = [
         {
             title: 'Campaign Title',
@@ -198,9 +221,9 @@ const FundsManagementPage = () => {
         },
         {
             title: 'Final Amount Raised (Ksh)',
-            dataIndex: 'currentAmount', // Assuming 'currentAmount' holds final amount raised
+            dataIndex: 'currentAmount',
             key: 'finalAmountRaised',
-            render: (text) => text.toLocaleString(),
+            render: (text) => (text || 0).toLocaleString(), // Add default value
         },
         {
             title: 'End Date',
@@ -209,7 +232,7 @@ const FundsManagementPage = () => {
         },
         {
             title: 'Beneficiary',
-            dataIndex: 'beneficiaryName', // Adjust dataIndex based on your API response
+            dataIndex: 'beneficiaryName',
             key: 'beneficiaryName',
         },
         {
@@ -217,13 +240,11 @@ const FundsManagementPage = () => {
             key: 'actions',
             render: (text, record) => (
                 <Space size="middle">
-                    <Button type="primary" onClick={() => handleDisburseFunds(record.id)} loading={isActionLoading} style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}>Disburse Funds</Button>
-                    {/* Add "View Campaign Details" button linking back to Campaign Management page if needed */}
+                    <Button type="primary" onClick={() => handleDisburseFunds(record._id)} loading={isActionLoading} style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}>Disburse Funds</Button>
                 </Space>
             ),
         },
     ];
-
 
     return (
         <AdminLayout>
@@ -240,14 +261,13 @@ const FundsManagementPage = () => {
                 {loading && <Spin tip="Loading Funds Data..." style={{ display: 'block', marginBottom: 24 }} />}
                 {error && <Alert message={`Error fetching funds data: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: 24 }} />}
 
-
                 <Tabs activeKey={activeTabKey} onChange={setActiveTabKey} centered>
                     <TabPane tab="Campaign Fundraising Overview" key="fundraising">
                         <Table
                             loading={loading}
                             columns={fundraisingOverviewColumns}
-                            dataSource={campaignFundsData.filter(campaign => activeTabKey === 'fundraising')} // Adjust filter as needed
-                            rowKey="id"
+                            dataSource={campaignFundsData.filter(campaign => activeTabKey === 'fundraising')}
+                            rowKey="_id"
                             pagination={{ pageSize: 10 }}
                         />
                     </TabPane>
@@ -256,13 +276,12 @@ const FundsManagementPage = () => {
                         <Table
                             loading={loading}
                             columns={awaitingDisbursementColumns}
-                            dataSource={campaignFundsData.filter(campaign => activeTabKey === 'disbursement')} // Adjust filter as needed
-                            rowKey="id"
+                            dataSource={campaignFundsData.filter(campaign => activeTabKey === 'disbursement')}
+                            rowKey="_id"
                             pagination={{ pageSize: 10 }}
                         />
                     </TabPane>
                 </Tabs>
-
 
                 {/* Contributors Modal */}
                 <Modal
@@ -282,9 +301,9 @@ const FundsManagementPage = () => {
                             renderItem={(contributor) => (
                                 <List.Item>
                                     <List.Item.Meta
-                                        avatar={<UserOutlined />} // Or Avatar component if you have profile pictures
-                                        title={<Text strong>{contributor.memberName || contributor.memberNickname || 'Anonymous'}</Text>} // Adjust data keys
-                                        description={`Contributed Ksh ${contributor.amount.toLocaleString()} on ${contributor.contributionDate}`} // Adjust data keys
+                                        avatar={<UserOutlined />}
+                                        title={<Text strong>{contributor.memberName || contributor.memberNickname || 'Anonymous'}</Text>}
+                                        description={`Contributed Ksh ${(contributor.amount || 0).toLocaleString()} on ${contributor.contributionDate || 'N/A'}`} // Add default values
                                     />
                                 </List.Item>
                             )}
@@ -294,7 +313,6 @@ const FundsManagementPage = () => {
                         <Alert message="No contributions yet for this campaign." type="info" showIcon />
                     )}
                 </Modal>
-
 
                 {/* Contribution History Modal */}
                 <Modal
@@ -314,10 +332,10 @@ const FundsManagementPage = () => {
                             renderItem={(historyItem) => (
                                 <List.Item>
                                     <List.Item.Meta
-                                        title={`Ksh ${historyItem.amount.toLocaleString()} - Contributed by ${historyItem.memberName || historyItem.memberNickname || 'Anonymous'} on ${historyItem.contributionDate}`} // Adjust data keys
+                                        title={`Ksh ${(historyItem.amount || 0).toLocaleString()} - Contributed by ${historyItem.memberName || historyItem.memberNickname || 'Anonymous'} on ${historyItem.contributionDate || 'N/A'}`} // Add default values
                                     />
                                     <Paragraph>
-                                        Transaction ID: {historyItem.transactionId || 'N/A'} {/* Adjust data keys */}
+                                        Transaction ID: {historyItem.transactionId || 'N/A'}
                                     </Paragraph>
                                 </List.Item>
                             )}
@@ -327,8 +345,6 @@ const FundsManagementPage = () => {
                         <Alert message="No contribution history available for this campaign." type="info" showIcon />
                     )}
                 </Modal>
-
-
             </div>
         </AdminLayout>
     );

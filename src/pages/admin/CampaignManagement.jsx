@@ -13,9 +13,10 @@ import {
     Tag,
     Space,
     Progress,
+    message, // Import message for notifications
 } from 'antd';
 import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
-import { API_URL } from '../../services/api';
+import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
 
 const { Title, Paragraph, Text } = Typography;
 const { TabPane } = Tabs;
@@ -80,6 +81,8 @@ const CampaignManagementPage = () => {
             filteredData = campaigns.filter(c => c.status === 'active');
         } else if (activeTabKey === 'pending') {
             filteredData = campaigns.filter(c => c.status === 'pending_approval');
+        } else if (activeTabKey === 'records') {
+            filteredData = campaigns.filter(c => c.status !== 'pending_approval' && c.status !== 'active'); // Adjust filter for records tab as needed
         }
 
         if (searchText) {
@@ -125,7 +128,20 @@ const CampaignManagementPage = () => {
     };
 
     // Campaign Actions
-    const handleEndCampaign = async (campaignId) => { setIsActionLoading(true); try { /* API call to end campaign */ console.log(`Ending campaign: ${campaignId}`); } finally { setIsActionLoading(false); } };
+    const handleEndCampaign = async (campaignId) => {
+        setIsActionLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/end`, { method: 'POST', headers: getAuthHeaders() });
+            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to end campaign'); }
+            message.success(`Campaign ${campaignId} ended successfully`);
+            await fetchData(); // Refresh data
+        } catch (error) {
+            setError(`Error ending campaign: ${error.message}`);
+            message.error(`Error ending campaign: ${error.message}`);
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
 
     const handleApproveCampaign = async (campaignId) => {
         setIsActionLoading(true);
@@ -135,15 +151,59 @@ const CampaignManagementPage = () => {
 
             message.success(`Campaign ${campaignId} approved successfully`);
             setIsApprovalModalVisible(false);
+            await fetchData();
 
-            await fetchData(); // <-- AWAIT fetchData to refresh data and re-render!
-
-        } catch (error) { setError(`Error approving campaign: ${error.message}`); } finally { setIsActionLoading(false); }
+        } catch (error) {
+            setError(`Error approving campaign: ${error.message}`);
+            message.error(`Error approving campaign: ${error.message}`);
+        } finally {
+            setIsActionLoading(false);
+        }
     };
 
-    const handleRejectCampaign = async (campaignId) => { setIsActionLoading(true); try { /* API call to reject campaign */ console.log(`Rejecting campaign: ${campaignId}, Reason: ${rejectionReason}`); } finally { setIsApprovalModalVisible(false); setIsActionLoading(false); setRejectionReason(''); } };
+    const handleRejectCampaign = async (campaignId) => {
+        setIsActionLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/reject`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ rejectionReason: rejectionReason }), // Send rejection reason in body
+            });
+            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to reject campaign'); }
 
-    const handleDisburseFunds = async (campaignId) => { setIsActionLoading(true); try { /* API call to disburse funds */ console.log(`Disbursing funds for: ${campaignId}`); } finally { setIsActionLoading(false); } };
+            message.success(`Campaign ${campaignId} rejected successfully`);
+            setIsApprovalModalVisible(false);
+            await fetchData();
+        } catch (error) {
+            setError(`Error rejecting campaign: ${error.message}`);
+            message.error(`Error rejecting campaign: ${error.message}`);
+        } finally {
+            setIsApprovalModalVisible(false);
+            setIsActionLoading(false);
+            setRejectionReason('');
+        }
+    };
+
+    const handleDisburseFunds = async (campaignId) => {
+        setIsActionLoading(true);
+        try {
+            // For disbursement, you might need to send additional details in the body, adjust as per your API requirements
+            const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/disburse`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ /* disbursement details if needed, e.g., disbursementMethod, disbursementDetails, disbursementAmount */ }),
+            });
+            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to disburse funds'); }
+
+            message.success(`Funds disbursement initiated for campaign ${campaignId}`);
+            await fetchData();
+        } catch (error) {
+            setError(`Error disbursing funds: ${error.message}`);
+            message.error(`Error disbursing funds: ${error.message}`);
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
 
     // Table Columns
     const activeCampaignsColumns = [
@@ -211,11 +271,6 @@ const CampaignManagementPage = () => {
                 </Button>
             ),
         },
-       /* {
-            title: 'Requester',
-            dataIndex: 'requesterName',
-            key: 'requesterName',
-        },*/
         {
             title: 'Date Requested',
             dataIndex: 'createdAt',
@@ -345,7 +400,7 @@ const CampaignManagementPage = () => {
                         <Table
                             columns={activeCampaignsColumns}
                             dataSource={filteredCampaigns.filter(c => activeTabKey === 'active')}
-                            rowKey="id"
+                            rowKey="_id" // Use _id as rowKey, assuming MongoDB _id
                             pagination={{ pageSize: 10 }}
                         />
                     </TabPane>
@@ -365,7 +420,7 @@ const CampaignManagementPage = () => {
                         <Table
                             columns={pendingApprovalColumns}
                             dataSource={filteredCampaigns.filter(c => activeTabKey === 'pending')}
-                            rowKey="id"
+                            rowKey="_id" // Use _id as rowKey
                             pagination={{ pageSize: 10 }}
                         />
                     </TabPane>
@@ -385,7 +440,7 @@ const CampaignManagementPage = () => {
                         <Table
                             columns={campaignRecordsColumns}
                             dataSource={filteredCampaigns.filter(c => activeTabKey === 'records')}
-                            rowKey="id"
+                            rowKey="_id" // Use _id as rowKey
                             pagination={{ pageSize: 10 }}
                         />
                     </TabPane>
@@ -473,11 +528,7 @@ const CampaignManagementPage = () => {
                                     <Button
                                         type="primary"
                                         style={{ backgroundColor: 'maroon', borderColor: 'maroon' }}
-                                        onClick={() => { // <-- Modified to an arrow function block
-                                            console.log("Approve Button Clicked - selectedCampaignForApproval:", selectedCampaignForApproval); // <-- ADD THIS LOG
-                                            console.log("Approve Button Clicked - selectedCampaignForApproval._id:", selectedCampaignForApproval?._id); // <-- ADD THIS LOG - Safe access with ?.
-                                            handleApproveCampaign(selectedCampaignForApproval._id); // Call handleApproveCampaign as before
-                                        }}
+                                        onClick={() => handleApproveCampaign(selectedCampaignForApproval._id)}
                                         loading={isActionLoading}
                                     >
                                         Approve

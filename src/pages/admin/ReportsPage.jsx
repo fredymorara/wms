@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '../../layout/AdminLayout'; // Adjust path if needed
+import AdminLayout from '../../layout/AdminLayout';
 import {
     Typography,
     Tabs,
@@ -8,105 +8,113 @@ import {
     Button,
     Spin,
     Alert,
-    Space,
-    Form, // Correct import for Form
+    Form,
+    message, // Import message for notifications
 } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
 
 const { Title, Paragraph, Text } = Typography;
-const { TabPane } = Tabs; // No longer directly used, but keep import for potential reference or if you revert
+const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const ReportsPage = () => {
-    const [reportType, setActiveTabKey] = useState('general'); // Corrected state setter name
-    const [dateRange, setDateRange] = useState(null); // [dayjs, dayjs]
+    const [reportType, setActiveTabKey] = useState('general');
+    const [dateRange, setDateRange] = useState(null);
     const [selectedCampaign, setSelectedCampaign] = useState(null);
-    const [outputFormat, setOutputFormat] = useState('csv'); // 'csv' or 'pdf'
+    const [outputFormat, setOutputFormat] = useState('csv');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [campaignOptions, setCampaignOptions] = useState([]); // For Campaign Select Dropdown
-
-    // Placeholder for report data - you might want to display a table or chart based on the report
+    const [campaignOptions, setCampaignOptions] = useState([]);
     const [reportData, setReportData] = useState(null);
 
-    // Fetch campaigns for Campaign-Specific Report dropdown (Placeholder - replace with your API endpoint)
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    };
+
+    // Fetch campaigns for Campaign-Specific Report dropdown
     useEffect(() => {
         const fetchCampaigns = async () => {
             try {
-                // Replace 'http://localhost:5000/api/admin/campaigns-list' with your actual API endpoint to fetch campaign list for reports
-                const response = await fetch('http://localhost:5000/api/admin/campaigns-list');
+                const response = await fetch(`${API_URL}/admin/campaigns-list`, {
+                    headers: getAuthHeaders()
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setCampaignOptions(data.map(campaign => ({ value: campaign.id, label: campaign.title }))); // Adjust value and label based on your API response
+                setCampaignOptions(data.map(campaign => ({ value: campaign._id, label: campaign.title }))); // Use _id as value
             } catch (e) {
-                setError(e.message); // Or handle error more gracefully
+                setError(e.message);
             }
         };
 
         fetchCampaigns();
     }, []);
 
-
     const handleGenerateReport = async () => {
         setLoading(true);
         setError(null);
-        setReportData(null); // Clear previous report data
+        setReportData(null);
 
         let apiUrl = '';
         let reportParams = {};
 
         if (reportType === 'general') {
-            apiUrl = 'http://localhost:5000/api/admin/reports/general-contributions'; // Replace with your actual API endpoint
+            apiUrl = `${API_URL}/admin/reports/general-contributions`; // Use API_URL here
             reportParams = {
                 startDate: dateRange ? dateRange[0].format('YYYY-MM-DD') : null,
                 endDate: dateRange ? dateRange[1].format('YYYY-MM-DD') : null,
                 format: outputFormat,
             };
         } else if (reportType === 'campaign') {
-            apiUrl = 'http://localhost:5000/api/admin/reports/campaign-specific'; // Replace with your actual API endpoint
+            apiUrl = `${API_URL}/admin/reports/campaign-specific`; // Use API_URL here
             reportParams = {
                 campaignId: selectedCampaign,
                 startDate: dateRange ? dateRange[0].format('YYYY-MM-DD') : null,
                 endDate: dateRange ? dateRange[1].format('YYYY-MM-DD') : null,
                 format: outputFormat,
-                reportType: 'financial_summary', // Example report type - adjust as needed
+                reportType: 'financial_summary',
             };
         }
 
         try {
             const queryString = new URLSearchParams(reportParams).toString();
             const fullApiUrl = `${apiUrl}?${queryString}`;
-            const response = await fetch(fullApiUrl);
+            const response = await fetch(fullApiUrl, {
+                headers: getAuthHeaders()
+            });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
 
-            const data = await response.blob(); // Expecting blob for download (CSV, PDF) or adjust based on your API response
-            setReportData(data); // Store blob data for download
+            const data = await response.blob();
+            setReportData(data);
 
-            // Trigger download immediately after successful fetch
             const url = window.URL.createObjectURL(data);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `report_${reportType}_${new Date().toISOString()}.${outputFormat}`; // Filename for download
+            link.download = `report_${reportType}_${new Date().toISOString()}.${outputFormat}`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-
-
+            message.success('Report generated successfully!'); // Success message
         } catch (e) {
             setError(e.message);
+            message.error(`Report generation error: ${e.message}`); // Error message
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <AdminLayout>
@@ -122,9 +130,9 @@ const ReportsPage = () => {
 
                 <Tabs
                     activeKey={reportType}
-                    onChange={(key) => setActiveTabKey(key)} // Corrected onChange handler
+                    onChange={(key) => setActiveTabKey(key)}
                     centered
-                    items={[ // Using items prop for Tabs
+                    items={[
                         {
                             key: 'general',
                             label: 'General Contribution Report',
@@ -186,10 +194,8 @@ const ReportsPage = () => {
                                         <Form.Item label="Report Type">
                                             <Select defaultValue="financial_summary" style={{ width: 200 }} disabled>
                                                 <Option value="financial_summary">Financial Summary</Option>
-                                                {/* <Option value="contributor_list">Contributor List</Option>  - Add if you want different report types */}
                                             </Select>
                                         </Form.Item>
-
 
                                         <Form.Item label="Output Format">
                                             <Select defaultValue="csv" style={{ width: 120 }} onChange={setOutputFormat}>
@@ -204,7 +210,7 @@ const ReportsPage = () => {
                                                 onClick={handleGenerateReport}
                                                 loading={loading}
                                                 icon={<DownloadOutlined />}
-                                                disabled={!selectedCampaign} // Disable if no campaign selected
+                                                disabled={!selectedCampaign}
                                                 style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}
                                             >
                                                 Generate Report
@@ -217,30 +223,16 @@ const ReportsPage = () => {
                     ]}
                 />
 
-
                 {error && (
-                    <Spin tip="Error Generating Report..." spinning={loading}> {/* Nested Spin for tip warning */}
+                    <Spin tip="Error Generating Report..." spinning={loading}>
                         <Alert message={`Report generation error: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginTop: 24 }} />
                     </Spin>
                 )}
                 {!error && loading && (
-                    <Spin tip="Generating Report..." style={{ display: 'block', marginTop: 24 }}> {/* Corrected Spin Usage */}
-                        <div /> {/* Empty div for nested Spin */}
+                    <Spin tip="Generating Report..." style={{ display: 'block', marginTop: 24 }}>
+                        <div />
                     </Spin>
                 )}
-
-
-                {/* Placeholder for displaying report data if you want to show a preview in the browser
-                {reportData && (
-                    <div style={{ marginTop: 32, border: '1px solid #d9d9d9', padding: 16, borderRadius: 8 }}>
-                        <Title level={4} style={{ color: 'maroon' }}>Report Preview (Basic)</Title>
-                        <Paragraph>Displaying basic preview here - for CSV/PDF, download is more suitable.</Paragraph>
-                         {/*  Component to display report data - Table, Chart, etc. - based on reportData  }
-                    </div>
-                )}
-                */}
-
-
             </div>
         </AdminLayout>
     );
