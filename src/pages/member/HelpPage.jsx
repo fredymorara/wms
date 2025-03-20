@@ -135,7 +135,12 @@ function HelpPage() {
                                             type="primary"
                                             htmlType="submit"
                                             loading={loading}
-                                            style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white', width: '100%' }}
+                                            style={{
+                                                background: '#b5e487',
+                                                borderColor: 'maroon',
+                                                color: 'black',
+                                                width: "100%"
+                                            }}
                                         >
                                             Submit Inquiry
                                         </Button>
