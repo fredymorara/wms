@@ -13,10 +13,12 @@ import {
     Tag,
     Space,
     Progress,
-    message, // Import message for notifications
+    message,
 } from 'antd';
 import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
-import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
+import { API_URL } from '../../services/api';
+import { useLocation, useNavigate } from 'react-router-dom';
+import CreateCampaignModal from '../../pages/admin/CreateCampaignModal'; // Import CreateCampaignModal
 
 const { Title, Paragraph, Text } = Typography;
 const { TabPane } = Tabs;
@@ -33,16 +35,29 @@ const CampaignManagementPage = () => {
     const [form] = Form.useForm();
     const [rejectionReason, setRejectionReason] = useState('');
     const [isActionLoading, setIsActionLoading] = useState(false);
-
-    // Modal States
     const [selectedCampaignForDetails, setSelectedCampaignForDetails] = useState(null);
     const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
     const [selectedCampaignForApproval, setSelectedCampaignForApproval] = useState(null);
     const [isApprovalModalVisible, setIsApprovalModalVisible] = useState(false);
+    const [isCreateCampaignModalVisible, setIsCreateCampaignModalVisible] = useState(false); // State for Create Campaign Modal
 
-    // Search Handlers
-    const handleSearch = (value) => setSearchText(value);
-    const clearSearch = () => setSearchText('');
+    // Router Hooks
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Fetch data on component mount and when URL search params change
+    useEffect(() => {
+        fetchData(); // Fetch campaigns on component mount
+
+        // Check for 'tab' parameter in URL
+        const params = new URLSearchParams(location.search);
+        const tabParam = params.get('tab');
+        if (tabParam === 'pending') {
+            setActiveTabKey('pending'); // Set active tab to 'pending' if parameter is present
+        } else {
+            setActiveTabKey('active'); // Default to 'active' tab if no parameter or different parameter
+        }
+    }, [location.search]);
 
     // Data Fetching
     const fetchData = async () => {
@@ -61,10 +76,6 @@ const CampaignManagementPage = () => {
         }
     };
 
-    useEffect(() => {
-        fetchData(); // Call fetchData here to load initial data
-    }, []);
-
     // Responsive Design
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -82,7 +93,7 @@ const CampaignManagementPage = () => {
         } else if (activeTabKey === 'pending') {
             filteredData = campaigns.filter(c => c.status === 'pending_approval');
         } else if (activeTabKey === 'records') {
-            filteredData = campaigns.filter(c => c.status !== 'pending_approval' && c.status !== 'active'); // Adjust filter for records tab as needed
+            filteredData = campaigns.filter(c => c.status !== 'pending_approval' && c.status !== 'active');
         }
 
         if (searchText) {
@@ -103,6 +114,15 @@ const CampaignManagementPage = () => {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         };
+    };
+
+    // Search Handlers
+    const handleSearch = (value) => {
+        setSearchText(value); // Update the search text state
+    };
+
+    const clearSearch = () => {
+        setSearchText(''); // Clear the search text
     };
 
     // Modal Handlers
@@ -187,11 +207,10 @@ const CampaignManagementPage = () => {
     const handleDisburseFunds = async (campaignId) => {
         setIsActionLoading(true);
         try {
-            // For disbursement, you might need to send additional details in the body, adjust as per your API requirements
             const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/disburse`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ /* disbursement details if needed, e.g., disbursementMethod, disbursementDetails, disbursementAmount */ }),
+                body: JSON.stringify({ /* disbursement details if needed */ }),
             });
             if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to disburse funds'); }
 
@@ -383,64 +402,49 @@ const CampaignManagementPage = () => {
                     />
                 )}
 
+                {/* Top Buttons and Search */}
+                <div style={{ marginBottom: 16, textAlign: 'right', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Button type="primary" onClick={() => setIsCreateCampaignModalVisible(true)} style={{ backgroundColor: '#b5e487', borderColor: 'maroon', color: 'black' }}>
+                        Create New Campaign
+                    </Button>
+                    <Input.Search
+                        placeholder="Search campaigns"
+                        onSearch={handleSearch}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        style={{ width: isMobile ? '100%' : 300 }}
+                        value={searchText}
+                        suffix={searchText && <CloseOutlined onClick={clearSearch} style={{ cursor: 'pointer' }} />}
+                    />
+                </div>
+
                 {/* Tabs Section */}
                 <Tabs activeKey={activeTabKey} onChange={setActiveTabKey} centered>
                     {/* Active Campaigns Tab */}
                     <TabPane tab="Active Campaigns" key="active">
-                        <div style={{ marginBottom: 16, textAlign: 'right' }}>
-                            <Input.Search
-                                placeholder="Search active campaigns"
-                                onSearch={handleSearch}
-                                onChange={(e) => handleSearch(e.target.value)}
-                                style={{ width: isMobile ? '100%' : 300 }}
-                                value={searchText}
-                                suffix={searchText && <CloseOutlined onClick={clearSearch} style={{ cursor: 'pointer' }} />}
-                            />
-                        </div>
                         <Table
                             columns={activeCampaignsColumns}
                             dataSource={filteredCampaigns.filter(c => activeTabKey === 'active')}
-                            rowKey="_id" // Use _id as rowKey, assuming MongoDB _id
+                            rowKey="_id"
                             pagination={{ pageSize: 10 }}
                         />
                     </TabPane>
 
                     {/* Pending Approval Tab */}
                     <TabPane tab="Pending Approval" key="pending">
-                        <div style={{ marginBottom: 16, textAlign: 'right' }}>
-                            <Input.Search
-                                placeholder="Search pending campaigns"
-                                onSearch={handleSearch}
-                                onChange={(e) => handleSearch(e.target.value)}
-                                style={{ width: isMobile ? '100%' : 300 }}
-                                value={searchText}
-                                suffix={searchText && <CloseOutlined onClick={clearSearch} style={{ cursor: 'pointer' }} />}
-                            />
-                        </div>
                         <Table
                             columns={pendingApprovalColumns}
                             dataSource={filteredCampaigns.filter(c => activeTabKey === 'pending')}
-                            rowKey="_id" // Use _id as rowKey
+                            rowKey="_id"
                             pagination={{ pageSize: 10 }}
                         />
                     </TabPane>
 
                     {/* Campaign Records Tab */}
                     <TabPane tab="Campaign Records" key="records">
-                        <div style={{ marginBottom: 16, textAlign: 'right' }}>
-                            <Input.Search
-                                placeholder="Search campaign records"
-                                onSearch={handleSearch}
-                                onChange={(e) => handleSearch(e.target.value)}
-                                style={{ width: isMobile ? '100%' : 300 }}
-                                value={searchText}
-                                suffix={searchText && <CloseOutlined onClick={clearSearch} style={{ cursor: 'pointer' }} />}
-                            />
-                        </div>
                         <Table
                             columns={campaignRecordsColumns}
                             dataSource={filteredCampaigns.filter(c => activeTabKey === 'records')}
-                            rowKey="_id" // Use _id as rowKey
+                            rowKey="_id"
                             pagination={{ pageSize: 10 }}
                         />
                     </TabPane>
@@ -528,7 +532,11 @@ const CampaignManagementPage = () => {
                                     <Button
                                         type="primary"
                                         style={{ backgroundColor: 'maroon', borderColor: 'maroon' }}
-                                        onClick={() => handleApproveCampaign(selectedCampaignForApproval._id)}
+                                        onClick={() => {
+                                            console.log("Approve Button Clicked - selectedCampaignForApproval:", selectedCampaignForApproval);
+                                            console.log("Approve Button Clicked - selectedCampaignForApproval._id:", selectedCampaignForApproval?._id);
+                                            handleApproveCampaign(selectedCampaignForApproval._id);
+                                        }}
                                         loading={isActionLoading}
                                     >
                                         Approve
@@ -538,6 +546,13 @@ const CampaignManagementPage = () => {
                         </div>
                     )}
                 </Modal>
+
+                {/* Embed Create Campaign Modal */}
+                <CreateCampaignModal
+                    visible={isCreateCampaignModalVisible}
+                    onCancel={() => setIsCreateCampaignModalVisible(false)}
+                    onCreated={fetchData} // Refresh campaign list after campaign creation
+                />
             </div>
         </AdminLayout>
     );

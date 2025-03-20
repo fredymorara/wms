@@ -9,11 +9,11 @@ import {
     Spin,
     Alert,
     Form,
-    message, // Import message for notifications
+    message,
 } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
+import { API_URL } from '../../services/api';
 
 const { Title, Paragraph, Text } = Typography;
 const { TabPane } = Tabs;
@@ -28,8 +28,8 @@ const ReportsPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [campaignOptions, setCampaignOptions] = useState([]);
-    const [reportData, setReportData] = useState(null);
 
+    // Function to get authentication headers
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token');
         return {
@@ -38,7 +38,7 @@ const ReportsPage = () => {
         };
     };
 
-    // Fetch campaigns for Campaign-Specific Report dropdown
+    // Fetch campaigns for the Campaign-Specific Report dropdown
     useEffect(() => {
         const fetchCampaigns = async () => {
             try {
@@ -49,7 +49,8 @@ const ReportsPage = () => {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setCampaignOptions(data.map(campaign => ({ value: campaign._id, label: campaign.title }))); // Use _id as value
+                // Map campaigns to options with value and label
+                setCampaignOptions(data.map(campaign => ({ value: campaign._id, label: campaign.title })));
             } catch (e) {
                 setError(e.message);
             }
@@ -58,23 +59,23 @@ const ReportsPage = () => {
         fetchCampaigns();
     }, []);
 
+    // Function to handle report generation
     const handleGenerateReport = async () => {
         setLoading(true);
         setError(null);
-        setReportData(null);
 
         let apiUrl = '';
         let reportParams = {};
 
         if (reportType === 'general') {
-            apiUrl = `${API_URL}/admin/reports/general-contributions`; // Use API_URL here
+            apiUrl = `${API_URL}/admin/reports/general-contributions`;
             reportParams = {
                 startDate: dateRange ? dateRange[0].format('YYYY-MM-DD') : null,
                 endDate: dateRange ? dateRange[1].format('YYYY-MM-DD') : null,
                 format: outputFormat,
             };
         } else if (reportType === 'campaign') {
-            apiUrl = `${API_URL}/admin/reports/campaign-specific`; // Use API_URL here
+            apiUrl = `${API_URL}/admin/reports/campaign-specific`;
             reportParams = {
                 campaignId: selectedCampaign,
                 startDate: dateRange ? dateRange[0].format('YYYY-MM-DD') : null,
@@ -97,8 +98,6 @@ const ReportsPage = () => {
             }
 
             const data = await response.blob();
-            setReportData(data);
-
             const url = window.URL.createObjectURL(data);
             const link = document.createElement('a');
             link.href = url;
@@ -107,10 +106,10 @@ const ReportsPage = () => {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-            message.success('Report generated successfully!'); // Success message
+            message.success('Report generated successfully!');
         } catch (e) {
             setError(e.message);
-            message.error(`Report generation error: ${e.message}`); // Error message
+            message.error(`Report generation error: ${e.message}`);
         } finally {
             setLoading(false);
         }
@@ -146,7 +145,11 @@ const ReportsPage = () => {
                                         </Form.Item>
 
                                         <Form.Item label="Output Format">
-                                            <Select defaultValue="csv" style={{ width: 120 }} onChange={setOutputFormat}>
+                                            <Select
+                                                defaultValue="csv"
+                                                style={{ width: 120 }}
+                                                onChange={(value) => setOutputFormat(value)}
+                                            >
                                                 <Option value="csv">CSV</Option>
                                                 <Option value="pdf">PDF</Option>
                                             </Select>
@@ -178,7 +181,8 @@ const ReportsPage = () => {
                                         <Form.Item label="Select Campaign">
                                             <Select
                                                 placeholder="Select a campaign"
-                                                onChange={setSelectedCampaign}
+                                                value={selectedCampaign} // Controlled value
+                                                onChange={(value) => setSelectedCampaign(value)} // Update selectedCampaign
                                                 options={campaignOptions}
                                                 filterOption={(input, option) =>
                                                     (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -198,7 +202,11 @@ const ReportsPage = () => {
                                         </Form.Item>
 
                                         <Form.Item label="Output Format">
-                                            <Select defaultValue="csv" style={{ width: 120 }} onChange={setOutputFormat}>
+                                            <Select
+                                                defaultValue="csv"
+                                                style={{ width: 120 }}
+                                                onChange={(value) => setOutputFormat(value)}
+                                            >
                                                 <Option value="csv">CSV</Option>
                                                 <Option value="pdf">PDF</Option>
                                             </Select>

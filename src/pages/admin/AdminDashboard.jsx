@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layout/AdminLayout';
-import { Typography, Row, Col, Card, Statistic, Spin, Alert } from 'antd';
+import { Typography, Row, Col, Card, Statistic, Spin, Alert, Button } from 'antd';
 import {
     DashboardOutlined,
     FundOutlined,
     UsergroupAddOutlined,
     FileTextOutlined,
 } from '@ant-design/icons';
-import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
+import { API_URL } from '../../services/api';
+import CreateCampaignModal from './CreateCampaignModal';
+import UserManagementModal from './UserManagementModal';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const { Title, Paragraph } = Typography;
 
@@ -15,6 +18,9 @@ const AdminDashboard = () => {
     const [dashboardMetrics, setDashboardMetrics] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isCreateCampaignModalVisible, setIsCreateCampaignModalVisible] = useState(false);
+    const [isManageUsersModalVisible, setIsManageUsersModalVisible] = useState(false);
+    const navigate = useNavigate(); // Initialize useNavigate
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token');
@@ -106,7 +112,7 @@ const AdminDashboard = () => {
                                     title="Total Funds Raised (All Campaigns)"
                                     value={dashboardMetrics.totalFundsRaised}
                                     precision={0}
-                                    prefix={<DashboardOutlined />} // Consider a more financial icon
+                                    prefix={<DashboardOutlined />}
                                     valueStyle={{ color: '#08979c', fontSize: '1.5rem' }}
                                     style={{ textAlign: 'center' }}
                                 />
@@ -124,7 +130,7 @@ const AdminDashboard = () => {
                             <Card
                                 hoverable
                                 style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}
-                                onClick={() => { /* Implement action - e.g., navigate to campaign creation page */ console.log('Create New Campaign Clicked'); }}
+                                onClick={() => setIsCreateCampaignModalVisible(true)}
                             >
                                 <Card.Meta
                                     avatar={<FundOutlined style={{ fontSize: '24px', color: 'maroon' }} />}
@@ -137,7 +143,7 @@ const AdminDashboard = () => {
                             <Card
                                 hoverable
                                 style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}
-                                onClick={() => { /* Implement action - e.g., navigate to user management page */ console.log('Manage Users Clicked'); }}
+                                onClick={() => setIsManageUsersModalVisible(true)}
                             >
                                 <Card.Meta
                                     avatar={<UsergroupAddOutlined style={{ fontSize: '24px', color: 'maroon' }} />}
@@ -150,7 +156,7 @@ const AdminDashboard = () => {
                             <Card
                                 hoverable
                                 style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}
-                                onClick={() => { /* Implement action - e.g., navigate to pending approvals page */ console.log('Review Pending Approvals Clicked'); }}
+                                onClick={() => navigate('/admin/campaigns?tab=pending')} // Navigate to Campaign Management with tab parameter
                             >
                                 <Card.Meta
                                     avatar={<FileTextOutlined style={{ fontSize: '24px', color: 'maroon' }} />}
@@ -161,6 +167,21 @@ const AdminDashboard = () => {
                         </Col>
                     </Row>
                 </div>
+
+                {/* Modals */}
+                <CreateCampaignModal
+                    visible={isCreateCampaignModalVisible}
+                    onCancel={() => setIsCreateCampaignModalVisible(false)}
+                    onCreated={() => {
+                        setIsCreateCampaignModalVisible(false);
+                        fetchDashboardData(); // Re-fetch dashboard data if needed
+                    }}
+                />
+
+                <UserManagementModal
+                    visible={isManageUsersModalVisible}
+                    onCancel={() => setIsManageUsersModalVisible(false)}
+                />
             </div>
         </AdminLayout>
     );
