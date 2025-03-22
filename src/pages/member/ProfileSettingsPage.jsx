@@ -2,42 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Alert, Modal, Spin, Typography, Card, Row, Col, Avatar, Upload } from 'antd';
 import { UserOutlined, EditOutlined, UploadOutlined } from '@ant-design/icons';
 import MemberLayout from '../../layout/MemberLayout';
-import { API_URL } from '../../services/api';
+import MemberCampaignApplicationModal from '../../components/MemberCampaignApplicationModal'; // Import the new Modal component
+import { API_URL, updateMemberProfile, getMemberProfile } from '../../services/api'; // Import API functions
+import { useAuth } from '../../contexts/AuthContext'; // Import useAuth hook
 
 const { Title, Paragraph, Text } = Typography;
 
 function ProfileSettingsPage() {
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [updateLoading, setUpdateLoading] = useState(false); // Separate loading state for update action
     const [error, setError] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [form] = Form.useForm();
     const [uploadLoading, setUploadLoading] = useState(false);
     const [uploadError, setUploadError] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
+    const { token } = useAuth(); // Use AuthContext to get token
 
-    // Fetch profile data with authentication
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        };
-    };
+    // New state for campaign application modal
+    const [isApplyModalVisible, setIsApplyModalVisible] = useState(false);
 
     useEffect(() => {
         const fetchProfileData = async () => {
             setLoading(true);
+            setError(null);
             try {
-                const response = await fetch(`${API_URL}/member/profile`, {
-                    headers: getAuthHeaders(),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
+                const data = await getMemberProfile(token); // Use imported API function
                 setProfileData(data);
                 form.setFieldsValue(data); // Set form values
             } catch (e) {
@@ -48,7 +39,7 @@ function ProfileSettingsPage() {
         };
 
         fetchProfileData();
-    }, []);
+    }, [token]); // token dependency for useEffect
 
     // Mobile detection
     useEffect(() => {
@@ -70,18 +61,23 @@ function ProfileSettingsPage() {
 
     // Handle form submission
     const onFinish = async (values) => {
-        setLoading(true);
+        setUpdateLoading(true);
         setError(null);
         try {
-            // Simulate API call to update profile
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            console.log("onFinish function called with values:", values); // <--- ADD THIS LOG (BEFORE API CALL)
 
-            setProfileData(values); // Update local state
+            const response = await updateMemberProfile(values.fullName, token);
+
+            console.log("updateMemberProfile API call response:", response); // <--- ADD THIS LOG (AFTER API CALL)
+
+            setProfileData(response.user);
+            form.setFieldsValue(response.user);
             setIsModalVisible(false);
+            setUpdateLoading(false);
+            // Optionally show a success message using Ant Design message.success
         } catch (e) {
             setError(e.message);
-        } finally {
-            setLoading(false);
+            setUpdateLoading(false);
         }
     };
 
@@ -91,40 +87,26 @@ function ProfileSettingsPage() {
         setError('Please fill in all required fields correctly.');
     };
 
-    // Handle profile picture upload
+    // Handle profile picture upload (Placeholder - you can implement image upload later)
     const handleUploadChange = async (info) => {
-        if (info.file.status === 'uploading') {
-            setUploadLoading(true);
-            setUploadError(null);
-            return;
-        }
+        console.log('Upload change event:', info);
+        // Implement image upload logic here if needed
+        // For now, just setting a placeholder image URL
         if (info.file.status === 'done') {
-            try {
-                const base64 = await getBase64(info.file.originFileObj);
-                setProfileData({ ...profileData, profilePicture: base64 });
-                form.setFieldsValue({ ...profileData, profilePicture: base64 });
-                setUploadLoading(false);
-            } catch (e) {
-                setUploadError(e.message);
-                setUploadLoading(false);
-            }
-        } else if (info.file.status === 'error') {
-            setUploadError('Failed to upload profile picture.');
-            setUploadLoading(false);
+            const base64Placeholder = 'https://zos.alipayobjects.com/rmsportal/jkjgkefkvsdajkj.png'; // Replace with your placeholder or actual upload logic
+            setProfileData({ ...profileData, profilePicture: base64Placeholder });
+            form.setFieldsValue({ ...profileData, profilePicture: base64Placeholder });
         }
     };
 
-    // Convert image to base64
+    // Convert image to base64 (Placeholder function - for actual upload, you'd use FileReader or similar)
     const getBase64 = (img) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.addEventListener('load', () => resolve(reader.result));
-            reader.addEventListener('error', (error) => reject(error));
-            reader.readAsDataURL(img);
+        return new Promise((resolve) => {
+            resolve('base64-image-data'); // Replace with actual base64 conversion if needed
         });
     };
 
-    // Upload button for profile picture
+    // Upload button for profile picture (Placeholder)
     const uploadButton = (
         <div>
             {uploadLoading ? <Spin /> : <UploadOutlined />}
@@ -137,6 +119,29 @@ function ProfileSettingsPage() {
         padding: isMobile ? '24px 16px' : '32px 24px',
         marginBottom: 24,
         borderBottom: '2px solid #f0f0f0',
+    };
+
+    const defaultProfileData = {
+        fullName: 'Loading Name...',
+        admissionNumber: 'Loading...',
+        email: 'loading@example.com',
+        profilePicture: null, // Or a default placeholder image URL
+    };
+
+    // Function to show Apply Modal
+    const showApplyModal = () => {
+        setIsApplyModalVisible(true);
+    };
+
+    // Function to handle Apply Modal Cancel
+    const handleApplyModalCancel = () => {
+        setIsApplyModalVisible(false);
+    };
+
+    // Function to handle successful application submission (optional - for any refresh logic)
+    const handleApplicationCreated = () => {
+        // You can add logic here to refresh data or show a confirmation message if needed
+        console.log("Campaign application submitted successfully (callback from modal)");
     };
 
     return (
@@ -173,27 +178,27 @@ function ProfileSettingsPage() {
                             <div style={{ textAlign: 'center' }}>
                                 <Avatar
                                     size={isMobile ? 96 : 128}
-                                    src={(error ? defaultProfileData : profileData)?.profilePicture}
+                                    src={profileData?.profilePicture}
                                     alt="Profile Picture"
                                     icon={<UserOutlined />}
                                 />
-                                <Title level={3} style={{ color: 'maroon', marginTop: 16 }}>
-                                    {(error ? defaultProfileData : profileData)?.name}
+                                <Title level={4} style={{ color: 'black', marginTop: 16 }}>
+                                    {profileData?.fullName}
                                 </Title>
-                                <Text type="secondary">Admission Number: {(error ? defaultProfileData : profileData)?.admissionNumber}</Text>
+                                <Text type="secondary">{profileData?.admissionNumber}</Text>
                             </div>
                         </Col>
                         <Col xs={24} md={16}>
                             <Card>
                                 <Title level={4} style={{ color: 'maroon', marginBottom: 16 }}>Profile Details</Title>
                                 <Paragraph>
-                                    <Text strong>Name:</Text> {(error ? defaultProfileData : profileData)?.fullName}
+                                    <Text strong>Name:</Text> {profileData?.fullName}
                                 </Paragraph>
                                 <Paragraph>
-                                    <Text strong>Mobile Number:</Text> {(error ? defaultProfileData : profileData)?.mobileNumber}
+                                    <Text strong>Admission Number:</Text> {profileData?.admissionNumber}
                                 </Paragraph>
                                 <Paragraph>
-                                    <Text strong>Admission Number:</Text> {(error ? defaultProfileData : profileData)?.admissionNumber}
+                                    <Text strong>Email:</Text> {profileData?.email}
                                 </Paragraph>
                             </Card>
                         </Col>
@@ -230,48 +235,23 @@ function ProfileSettingsPage() {
                         layout="vertical"
                         onFinish={onFinish}
                         onFinishFailed={onFinishFailed}
-                        initialValues={error ? defaultProfileData : profileData}
+                        initialValues={profileData}
                         autoComplete="off"
                     >
                         <Form.Item
-                            label={<Text strong>Name</Text>}
-                            name="name"
+                            label={<Text strong>Full Name</Text>}
+                            name="fullName"
                             rules={[{ required: true, message: 'Please enter your name!' }]}
                         >
                             <Input disabled={error} />
                         </Form.Item>
-                        <Form.Item
-                            label={<Text strong>Mobile Number</Text>}
-                            name="mobileNumber"
-                            rules={[{ required: true, message: 'Please enter your mobile number!' }]}
-                        >
-                            <Input disabled={error} />
-                        </Form.Item>
-                        <Form.Item
-                            label={<Text strong>Profile Picture</Text>}
-                            name="profilePicture"
-                        >
-                            <Upload
-                                name="avatar"
-                                listType="picture-card"
-                                className="avatar-uploader"
-                                showUploadList={false}
-                                beforeUpload={() => false}
-                                onChange={handleUploadChange}
-                                disabled={error}
-                            >
-                                {((error ? defaultProfileData : profileData) || {}).profilePicture ? (
-                                    <img src={((error ? defaultProfileData : profileData) || {}).profilePicture} alt="avatar" style={{ width: '100%' }} />
-                                ) : uploadButton}
-                            </Upload>
-                            {uploadError && <Alert message={`Upload Error: ${uploadError}`} type="error" showIcon />}
-                        </Form.Item>
+
                         <Form.Item>
                             <Button
                                 type="primary"
                                 htmlType="submit"
-                                loading={loading}
-                                disabled={loading || error}
+                                loading={updateLoading}
+                                disabled={updateLoading || error}
                                 style={{
                                     background: '#b5e487',
                                     borderColor: 'maroon',
@@ -291,6 +271,7 @@ function ProfileSettingsPage() {
                     <Button
                         type="primary"
                         disabled={error}
+                        onClick={showApplyModal}
                         style={{
                             background: '#b5e487',
                             borderColor: 'maroon',
@@ -300,6 +281,13 @@ function ProfileSettingsPage() {
                         Apply Now
                     </Button>
                 </div>
+
+                {/* Member Campaign Application Modal - NEW MODAL */}
+                <MemberCampaignApplicationModal
+                    visible={isApplyModalVisible}
+                    onCancel={handleApplyModalCancel}
+                    onCreated={handleApplicationCreated} // Optional callback for successful creation
+                />
             </div>
         </MemberLayout>
     );
