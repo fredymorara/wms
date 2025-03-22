@@ -18,6 +18,7 @@ const MemberDashboardPage = () => {
     const [quickContributionAmount, setQuickContributionAmount] = useState(100);
     const [isMobile, setIsMobile] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0)
 
     // Fetch data from the server
     const getAuthHeaders = () => {
@@ -62,7 +63,7 @@ const MemberDashboardPage = () => {
             setLoading(false);
         };
         fetchData();
-    }, []);
+    }, [refreshKey]);
 
     // Mobile detection
     useEffect(() => {
@@ -278,7 +279,7 @@ const MemberDashboardPage = () => {
                             initialAmount={quickContributionAmount}
                             onPaymentSuccess={() => {
                                 setIsModalVisible(false);
-                                // Refresh logic
+                                setRefreshKey(prev => prev + 1); // Trigger refresh
                             }}
                             onPaymentError={setError}
                         />

@@ -18,6 +18,11 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
         setError(null);
         setSuccessMessage(null);
         try {
+            console.log('Initiating payment with:', {
+                phone: values.phone,
+                amount: values.amount,
+                campaignId: campaign.id
+            });
             // Format phone number
             const phoneNumber = values.phone.startsWith('0') ? '254' + values.phone.substring(1) : values.phone;
             const amount = Number(values.amount);
@@ -45,6 +50,7 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
             }
 
         } catch (error) {
+            console.error('Full payment error:', error);
             setError(error.message || 'Payment initiation failed. Please check your network and try again.');
             if (onPaymentError) {
                 onPaymentError(error.message || 'Payment initiation failed.');
