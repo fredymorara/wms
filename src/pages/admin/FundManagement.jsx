@@ -12,11 +12,10 @@ import {
     Tag,
     Space,
     List,
-    Card,
-    message, // Import message for notifications
+    message,
 } from 'antd';
 import { FundOutlined, HistoryOutlined, UserOutlined } from '@ant-design/icons';
-import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
+import { API_URL } from '../../services/api';
 
 const { Title, Paragraph, Text } = Typography;
 const { TabPane } = Tabs;
@@ -25,13 +24,13 @@ const FundsManagementPage = () => {
     const [campaignFundsData, setCampaignFundsData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTabKey, setActiveTabKey] = useState('fundraising'); // 'fundraising', 'disbursement'
+    const [activeTabKey, setActiveTabKey] = useState('fundraising');
     const [selectedCampaign, setSelectedCampaign] = useState(null);
     const [isContributorsModalVisible, setIsContributorsModalVisible] = useState(false);
     const [isContributionHistoryModalVisible, setIsContributionHistoryModalVisible] = useState(false);
     const [contributors, setContributors] = useState([]);
     const [contributionHistory, setContributionHistory] = useState([]);
-    const [isActionLoading, setIsActionLoading] = useState(false); // For Disburse Funds action
+    const [isActionLoading, setIsActionLoading] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
     const getAuthHeaders = () => {
@@ -55,7 +54,6 @@ const FundsManagementPage = () => {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                console.log('Fetched Campaign Data:', data); // Debug the data
                 setCampaignFundsData(data);
             } catch (e) {
                 setError(e.message);
@@ -139,13 +137,16 @@ const FundsManagementPage = () => {
             const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/disburse`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ /* disbursement details if needed */ }), // Add disbursement details if required by API
+                body: JSON.stringify({}),
             });
-            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to disburse funds'); }
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to disburse funds');
+            }
 
             message.success(`Funds disbursement initiated for campaign ${campaignId}`);
             // Optionally refresh campaign data after disbursement
-            fetchData(); // Re-fetch campaign data to update UI
+            fetchData();
         } catch (error) {
             setError(`Error disbursing funds: ${error.message}`);
             message.error(`Error disbursing funds: ${error.message}`);
@@ -169,19 +170,19 @@ const FundsManagementPage = () => {
             title: 'Target (Ksh)',
             dataIndex: 'targetAmount',
             key: 'targetAmount',
-            render: (text) => (text || 0).toLocaleString(), // Add default value
+            render: (text) => (text || 0).toLocaleString(),
         },
         {
             title: 'Raised (Ksh)',
             dataIndex: 'currentAmount',
             key: 'currentAmount',
-            render: (text) => (text || 0).toLocaleString(), // Add default value
+            render: (text) => (text || 0).toLocaleString(),
         },
         {
             title: '% Raised',
             dataIndex: 'percentageRaised',
             key: 'percentageRaised',
-            render: (percentage) => <Progress percent={percentage || 0} status="active" strokeColor="maroon" />, // Add default value
+            render: (percentage) => <Progress percent={percentage || 0} status="active" strokeColor="maroon" />,
         },
         {
             title: 'Status',
@@ -189,7 +190,7 @@ const FundsManagementPage = () => {
             key: 'status',
             render: (status) => {
                 let color = 'default';
-                let text = status?.toUpperCase() || 'N/A'; // Add default value
+                let text = status?.toUpperCase() || 'N/A';
                 if (status === 'active') color = 'green';
                 if (status === 'nearing_target') { color = 'blue'; text = 'Nearing Target'; }
                 if (status === 'awaiting_disbursement') { color = '#d46b08'; text = 'Awaiting Disbursement'; }
@@ -223,7 +224,7 @@ const FundsManagementPage = () => {
             title: 'Final Amount Raised (Ksh)',
             dataIndex: 'currentAmount',
             key: 'finalAmountRaised',
-            render: (text) => (text || 0).toLocaleString(), // Add default value
+            render: (text) => (text || 0).toLocaleString(),
         },
         {
             title: 'End Date',
@@ -302,8 +303,7 @@ const FundsManagementPage = () => {
                                 <List.Item>
                                     <List.Item.Meta
                                         avatar={<UserOutlined />}
-                                        title={<Text strong>{contributor.memberName || contributor.memberNickname || 'Anonymous'}</Text>}
-                                        description={`Contributed Ksh ${(contributor.amount || 0).toLocaleString()} on ${contributor.contributionDate || 'N/A'}`} // Add default values
+                                        title={<Text strong>{contributor.memberName || 'Anonymous'}</Text>}
                                     />
                                 </List.Item>
                             )}
@@ -332,11 +332,17 @@ const FundsManagementPage = () => {
                             renderItem={(historyItem) => (
                                 <List.Item>
                                     <List.Item.Meta
-                                        title={`Ksh ${(historyItem.amount || 0).toLocaleString()} - Contributed by ${historyItem.memberName || historyItem.memberNickname || 'Anonymous'} on ${historyItem.contributionDate || 'N/A'}`} // Add default values
+                                        title={<Text strong>{historyItem.memberName} </Text>}
+                                        description={
+                                            <>
+                                                <Text>Amount: Ksh {historyItem.amount.toLocaleString()}</Text><br />
+                                                <Text>Date: {historyItem.contributionDate ? new Date(historyItem.contributionDate).toLocaleDateString() : 'N/A'}</Text><br />
+                                                <Text>Payment Method: {historyItem.paymentMethod}</Text><br />
+                                                <Text>Status: {historyItem.status}</Text><br />
+                                                <Text>Transaction ID: {historyItem.transactionId}</Text>
+                                            </>
+                                        }
                                     />
-                                    <Paragraph>
-                                        Transaction ID: {historyItem.transactionId || 'N/A'}
-                                    </Paragraph>
                                 </List.Item>
                             )}
                         />

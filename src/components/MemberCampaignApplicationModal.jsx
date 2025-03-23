@@ -62,7 +62,7 @@ const MemberCampaignApplicationModal = ({ visible, onCancel, onCreated }) => { /
             visible={visible}
             onCancel={onCancel}
             footer={null}
-            width="70%" // Adjust width as needed
+            width="90%" // Adjust width as needed
         >
             {error && <Alert message={`Error: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: 24 }} />}
 

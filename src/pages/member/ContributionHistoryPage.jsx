@@ -50,7 +50,7 @@ function ContributionHistoryPage() {
                         campaign: contribution.campaign?.title || 'Unknown Campaign',
                         date: contribution.paymentDate || contribution.createdAt, // Use paymentDate from your model
                         amount: contribution.amount,
-                        receipt: contribution.receiptUrl || '#', // Assuming you might have a receiptUrl in future, if not remove this
+                        // receipt: contribution.receiptUrl || '#', // Removed receipt data
                     }));
 
                     setContributions(formattedContributions);
@@ -91,7 +91,7 @@ function ContributionHistoryPage() {
         setFilteredContributions(contributions);
     };
 
-    // Table columns (no changes needed - but adjust 'date' dataIndex to 'paymentDate' if that's what your model uses)
+    // Table columns (Removed Receipt Column)
     const columns = [
         {
             title: 'Campaign',
@@ -100,7 +100,7 @@ function ContributionHistoryPage() {
         },
         {
             title: 'Date',
-            dataIndex: 'date', // Keep 'date' if you format it in frontend, or change to 'paymentDate' if backend sends formatted date. Adjust render accordingly
+            dataIndex: 'date',
             key: 'date',
             render: (text) => (text ? moment(text).format('MMMM DD, YYYY') : 'N/A'),
         },
@@ -110,26 +110,7 @@ function ContributionHistoryPage() {
             key: 'amount',
             render: (text) => text.toLocaleString(),
         },
-        {
-            title: 'Receipt',
-            key: 'receipt',
-            render: (text, record) => (
-                record.receipt ? (
-                    <Button
-                        type="link"
-                        href={record.receipt}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        disabled={error}
-                        style={{ color: 'maroon' }}
-                    >
-                        View Receipt
-                    </Button>
-                ) : (
-                    'N/A'
-                )
-            ),
-        },
+        // Removed Receipt Column definition entirely
     ];
 
     // Section styling (no changes needed)
@@ -139,7 +120,7 @@ function ContributionHistoryPage() {
         borderBottom: '2px solid #f0f0f0',
     };
 
-    // Render contribution cards (no changes needed)
+    // Render contribution cards (Removed Receipt Button)
     const renderContributionCards = () => {
         if (filteredContributions.length === 0) {
             return (
@@ -168,22 +149,7 @@ function ContributionHistoryPage() {
                 <br />
                 <Text strong>Amount:</Text> Ksh {contribution.amount.toLocaleString()}
                 <br />
-                {contribution.receipt ? (
-                    <Button
-                        type="link"
-                        href={contribution.receipt}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        disabled={error}
-                        style={{ color: 'maroon', marginTop: 16 }}
-                    >
-                        View Receipt
-                    </Button>
-                ) : (
-                    <Text type="secondary" style={{ marginTop: 16 }}>
-                        No receipt available
-                    </Text>
-                )}
+                {/* Removed Receipt Button Conditional Rendering */}
             </Card>
         ));
     };
@@ -207,7 +173,7 @@ function ContributionHistoryPage() {
                         Your Contribution History
                     </Title>
                     <Paragraph style={{ marginBottom: '20px', textAlign: 'center' }}>
-                        View your past contributions and download receipts for your records.
+                        View your past contributions.
                     </Paragraph>
                 </div>
 
