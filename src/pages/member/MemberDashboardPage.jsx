@@ -47,16 +47,20 @@ const MemberDashboardPage = () => {
                     })));
                 }
 
-                // Fetch contributions
-                const contributionsResponse = await fetch(`${API_URL}/member/contributions`, { headers: getAuthHeaders() });
+                // Fetch recent activity - CHANGED ENDPOINT
+                const contributionsResponse = await fetch(`${API_URL}/member/my-recent-activity`, { headers: getAuthHeaders() });
                 if (contributionsResponse.ok) {
                     const contributionsData = await contributionsResponse.json();
-                    setRecentActivity(contributionsData.map(c => ({
+                    setRecentActivity(contributionsData.data.map(c => ({ // Access data.data
                         id: c._id,
-                        description: `Contributed KES ${c.amount} to ${c.campaign?.title}`,
-                        date: c.date || c.createdAt || new Date().toISOString(),
+                        description: `Contributed KES ${c.amount} to ${c.campaign?.title}`, // Simpler description
+                        date: c.paymentDate || c.createdAt || new Date().toISOString(), // Use paymentDate if available
                     })));
+                } else {
+                    // Handle error for fetching recent activity if needed
+                    console.error("Failed to fetch recent activity:", contributionsResponse.statusText);
                 }
+
             } catch (e) {
                 setError("Error loading data: " + e.message);
             }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Alert, Typography, Card, Row, Col } from 'antd';
 import MemberLayout from '../../layout/MemberLayout';
+import { API_URL } from '../../services/api'; // Import API_URL
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -11,7 +12,7 @@ function HelpPage() {
     const [errorMessage, setErrorMessage] = useState('');
     const [isMobile, setIsMobile] = useState(false);
 
-    // Mobile detection
+    // Mobile detection (no changes needed)
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
@@ -24,7 +25,8 @@ function HelpPage() {
         setSuccessMessage('');
         setErrorMessage('');
         try {
-            const response = await fetch('http://localhost:5000/api/member/inquiry', {  // Replace with your API endpoint
+            // Updated API endpoint using API_URL and correct route
+            const response = await fetch(`${API_URL}/member/inquiry`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -36,7 +38,8 @@ function HelpPage() {
                 setSuccessMessage('Your inquiry has been submitted successfully!');
                 form.resetFields(); // Clear the form
             } else {
-                setErrorMessage('Failed to submit inquiry. Please try again.');
+                const errorData = await response.json(); // Get error data from response
+                setErrorMessage(errorData.message || 'Failed to submit inquiry. Please try again.'); // Use error message from backend if available
             }
         } catch (error) {
             setErrorMessage('An error occurred while submitting your inquiry.');
@@ -50,7 +53,7 @@ function HelpPage() {
         setErrorMessage('Please fill in all required fields correctly.');
     };
 
-    // Section styling
+    // Section styling (no changes needed)
     const sectionStyle = {
         padding: isMobile ? '24px 16px' : '32px 24px',
         marginBottom: 24,
@@ -66,7 +69,7 @@ function HelpPage() {
                 backgroundColor: '#fff',
                 minHeight: '100vh',
             }}>
-                {/* Help Header */}
+                {/* Help Header (no changes needed) */}
                 <div style={{ ...sectionStyle, textAlign: 'center' }}>
                     <Title level={1} style={{
                         color: 'maroon',
@@ -80,7 +83,7 @@ function HelpPage() {
                     </Paragraph>
                 </div>
 
-                {/* Inquiry Form */}
+                {/* Inquiry Form (no changes needed) */}
                 <div style={sectionStyle}>
                     <Row justify="center">
                         <Col xs={24} md={16} lg={12}>

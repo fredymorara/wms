@@ -28,14 +28,15 @@ function ContributionHistoryPage() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`${API_URL}/member/contributions`, {
+                // Changed API endpoint to /member/my-contributions
+                const response = await fetch(`${API_URL}/member/my-contributions`, {
                     headers: getAuthHeaders(),
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    if (errorData.error === "Contribution is not defined") {
-                        // Handle case where the user has no contributions
+                    // Improved error handling for no contributions
+                    if (response.status === 404 && errorData.message === "No contributions found for this user") { // Assuming your backend sends this message for no contributions
                         setContributions([]);
                         setFilteredContributions([]);
                         setError(null); // No error, just no contributions
@@ -44,12 +45,12 @@ function ContributionHistoryPage() {
                     }
                 } else {
                     const data = await response.json();
-                    const formattedContributions = data.map(contribution => ({
+                    const formattedContributions = data.data.map(contribution => ({ // Access data.data as per your controller response
                         id: contribution._id,
                         campaign: contribution.campaign?.title || 'Unknown Campaign',
-                        date: contribution.date || contribution.createdAt,
+                        date: contribution.paymentDate || contribution.createdAt, // Use paymentDate from your model
                         amount: contribution.amount,
-                        receipt: contribution.receiptUrl || '#',
+                        receipt: contribution.receiptUrl || '#', // Assuming you might have a receiptUrl in future, if not remove this
                     }));
 
                     setContributions(formattedContributions);
@@ -65,7 +66,7 @@ function ContributionHistoryPage() {
         fetchData();
     }, []);
 
-    // Mobile detection
+    // Mobile detection (no changes needed)
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
@@ -73,7 +74,7 @@ function ContributionHistoryPage() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Handle search functionality
+    // Handle search functionality (no changes needed)
     const handleSearch = (value) => {
         setSearchText(value);
         const filteredData = contributions.filter((contribution) =>
@@ -84,13 +85,13 @@ function ContributionHistoryPage() {
         setFilteredContributions(filteredData);
     };
 
-    // Clear search input
+    // Clear search input (no changes needed)
     const clearSearch = () => {
         setSearchText('');
         setFilteredContributions(contributions);
     };
 
-    // Table columns
+    // Table columns (no changes needed - but adjust 'date' dataIndex to 'paymentDate' if that's what your model uses)
     const columns = [
         {
             title: 'Campaign',
@@ -99,7 +100,7 @@ function ContributionHistoryPage() {
         },
         {
             title: 'Date',
-            dataIndex: 'date',
+            dataIndex: 'date', // Keep 'date' if you format it in frontend, or change to 'paymentDate' if backend sends formatted date. Adjust render accordingly
             key: 'date',
             render: (text) => (text ? moment(text).format('MMMM DD, YYYY') : 'N/A'),
         },
@@ -131,14 +132,14 @@ function ContributionHistoryPage() {
         },
     ];
 
-    // Section styling
+    // Section styling (no changes needed)
     const sectionStyle = {
         padding: isMobile ? '24px 16px' : '32px 24px',
         marginBottom: 24,
         borderBottom: '2px solid #f0f0f0',
     };
 
-    // Render contributions as cards for mobile
+    // Render contribution cards (no changes needed)
     const renderContributionCards = () => {
         if (filteredContributions.length === 0) {
             return (
@@ -196,7 +197,7 @@ function ContributionHistoryPage() {
                 backgroundColor: '#fff',
                 minHeight: '100vh',
             }}>
-                {/* Contribution History Header */}
+                {/* Contribution History Header (no changes needed) */}
                 <div style={{ ...sectionStyle, textAlign: 'center' }}>
                     <Title level={1} style={{
                         color: 'maroon',
@@ -210,11 +211,11 @@ function ContributionHistoryPage() {
                     </Paragraph>
                 </div>
 
-                {/* Loading and Error States */}
+                {/* Loading and Error States (no changes needed) */}
                 {loading && <Alert message="Loading..." type="info" showIcon style={{ marginBottom: 24 }} />}
                 {error && <Alert message={`Error: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: 24 }} />}
 
-                {/* Search Input */}
+                {/* Search Input (no changes needed) */}
                 <div style={{ ...sectionStyle, textAlign: 'center' }}>
                     <Input
                         placeholder="Search contributions"
@@ -234,7 +235,7 @@ function ContributionHistoryPage() {
                     )}
                 </div>
 
-                {/* Contribution History Table or Cards */}
+                {/* Contribution History Table or Cards (no changes needed) */}
                 <div style={sectionStyle}>
                     {isMobile ? (
                         renderContributionCards()
