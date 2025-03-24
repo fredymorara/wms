@@ -3,7 +3,7 @@ import { Layout, Button, Typography, Form, Input, Alert } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
 import logo from '../assets/kabu-logo-Beveled-shadow.png';
-import { register } from '../services/api'; // Import the register function from api.js
+import { register } from '../services/api';
 
 const { Header, Content, Footer } = Layout;
 const { Title } = Typography;
@@ -36,16 +36,16 @@ const SignupPage = () => {
             });
 
             if (response.user) {
-                setFeedback({ type: 'success', message: 'Registration successful! Please login.' });
-                setTimeout(() => {
-                    navigate('/login');
-                }, 2000);
+                setFeedback({
+                    type: 'success',
+                    message: 'Registration successful! Please check your email to verify your account.'
+                });
             } else {
                 setFeedback({ type: 'error', message: response.message || 'Signup failed. Please try again.' });
             }
         } catch (error) {
             console.error('Registration error:', error);
-            if (error.response && error.response.data && error.response.data.message === 'User already exists') {
+            if (error.response?.data?.message === 'User already exists') {
                 setFeedback({ type: 'error', message: 'A user with this email or admission number already exists.' });
             } else {
                 setFeedback({ type: 'error', message: error.message || 'Signup failed. Please try again.' });
@@ -74,15 +74,15 @@ const SignupPage = () => {
                 <img
                     src={logo}
                     alt="Kabarak University Logo"
-                    style={{
-                        height: '60px',
-                    }}
+                    style={{ height: '60px' }}
                 />
                 <Title
                     level={4}
                     className="text-white mx-auto text-center flex-1"
                 >
-                    <span className="hidden sm:inline text-xl text-white md:text-2xl lg:text-3xl">Kabarak Student Welfare Management System</span>
+                    <span className="hidden sm:inline text-xl text-white md:text-2xl lg:text-3xl">
+                        Kabarak Student Welfare Management System
+                    </span>
                     <span className="sm:hidden text-lg text-white md:text-xl">KSW System</span>
                 </Title>
                 <div className="ml-4">
@@ -117,19 +117,14 @@ const SignupPage = () => {
                         <img
                             src={logo}
                             alt="Kabarak University Logo"
-                            style={{
-                                height: '45px',
-                                margin: 'auto',
-                                marginBottom: '1.5rem',
-                            }}
+                            style={{ height: '45px', margin: 'auto', marginBottom: '1.5rem' }}
                         />
                     </div>
 
-                    {/* Feedback Message */}
                     {feedback.message && (
                         <Alert
                             message={feedback.message}
-                            type={feedback.type} // "success" or "error"
+                            type={feedback.type}
                             showIcon
                             style={{ marginBottom: '1.5rem' }}
                         />
@@ -138,17 +133,13 @@ const SignupPage = () => {
                     <Form form={form} name="signup_form" initialValues={{ remember: true }} onFinish={onFinish}>
                         <Form.Item
                             name="fullName"
-                            rules={[
-                                { required: true, message: 'Please enter your full name!' },
-                            ]}
+                            rules={[{ required: true, message: 'Please enter your full name!' }]}
                         >
                             <Input prefix={<UserOutlined />} placeholder="Full Name" />
                         </Form.Item>
                         <Form.Item
                             name="admissionNumber"
-                            rules={[
-                                { required: true, message: 'Please enter your admission number!' },
-                            ]}
+                            rules={[{ required: true, message: 'Please enter your admission number!' }]}
                         >
                             <Input prefix={<IdcardOutlined />} placeholder="Admission Number" />
                         </Form.Item>

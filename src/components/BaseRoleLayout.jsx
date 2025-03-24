@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Breadcrumb, Avatar, theme } from 'antd';
+import { Layout, Menu, Breadcrumb, Avatar, theme, Button, Typography } from 'antd'; // Import Button and Typography
 import { Link, useLocation } from 'react-router-dom';
 import { MenuOutlined, CloseOutlined, UserOutlined } from '@ant-design/icons';
 import logo from '../assets/Kabarak_University_Extended_logo_910x256.png';
 import { API_URL } from '../services/api'; // Import API_URL
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 
 const { Header, Content, Footer } = Layout;
+const { Text } = Typography; // Destructure Text from Typography
 
 const BaseRoleLayout = ({
     children,
@@ -20,6 +22,7 @@ const BaseRoleLayout = ({
     const [isMobileView, setIsMobileView] = useState(false);
     const location = useLocation();
     const { token: { colorBgContainer, borderRadiusLG } } = theme.useToken();
+    const { logout } = useAuth(); // Get logout function from AuthContext
 
     // Responsive view handling
     useEffect(() => {
@@ -53,6 +56,10 @@ const BaseRoleLayout = ({
     }, [apiEndpointPath]);
 
     const getSelectedKeys = () => [location.pathname];
+
+    const handleLogout = () => {
+        logout(); // Call the logout function from AuthContext
+    };
 
     return (
         <Layout style={{
@@ -99,18 +106,24 @@ const BaseRoleLayout = ({
                     />
                 )}
 
-                {/* User Profile (Always Visible) */}
-                {showUserProfile && user && (
-                    <div style={{ display: 'flex', alignItems: 'center', color: 'white', marginLeft: 'auto' }}>
-                        <Avatar
-                            src={user.profilePicture} // Ensure this is populated
-                            size="large"
-                            icon={<UserOutlined />}
-                            style={{ marginRight: 8 }}
-                        />
-                        <span>{user.name}</span>
-                    </div>
-                )}
+                {/* User Profile and Logout Button */}
+                <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+                    {showUserProfile && user && (
+                        <div style={{ display: 'flex', alignItems: 'center', color: 'black', marginRight: 20 }}> {/* Adjusted color to black and added margin */}
+                            <Avatar
+                                src={user.profilePicture} // Ensure this is populated
+                                size="large"
+                                icon={<UserOutlined />}
+                                style={{ marginRight: 8 }}
+                            />
+                            <Text strong>{user.fullName}</Text> {/* Display full name and use Text component */}
+                        </div>
+                    )}
+                    <Button type="primary" danger onClick={handleLogout}>
+                        Logout
+                    </Button>
+                </div>
+
 
                 {/* Hamburger Menu Button (Mobile Only) */}
                 {isMobileView && (

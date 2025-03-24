@@ -183,17 +183,17 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
                         {campaign.category || "No Category Available"}
                     </Text>
                     <Progress
-                        percent={Math.min(Math.round((campaign.currentAmount / campaign.goalAmount) * 100), 100)}
-                        status={campaign.currentAmount >= campaign.goalAmount ? "success" : "active"}
+                        percent={Math.min(Math.round((campaign.raised / campaign.goal) * 100), 100)}
+                        status={campaign.currentAmount >= campaign.goal ? "success" : "active"}
                         strokeColor="maroon"
                         style={{ margin: '16px 0' }}
                     />
                     <Row gutter={16}>
                         <Col span={12}>
-                            <Statistic title="Target" value={campaign.goalAmount || 0} prefix="KES" />
+                            <Statistic title="Target" value={campaign.goal || 0} prefix="KES" />
                         </Col>
                         <Col span={12}>
-                            <Statistic title="Raised" value={campaign.currentAmount || 0} prefix="KES" />
+                            <Statistic title="Raised" value={campaign.raised || 0} prefix="KES" />
                         </Col>
                     </Row>
                     <Paragraph style={{ marginTop: 16 }}>
