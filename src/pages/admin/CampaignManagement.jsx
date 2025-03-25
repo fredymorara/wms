@@ -284,7 +284,6 @@ const CampaignManagementPage = () => {
             title: 'Title',
             dataIndex: 'title',
             key: 'title',
-            ellipsis: true,
             render: (text, record) => (
                 <Button type="link" onClick={() => showApprovalModal(record)} style={{ color: 'maroon', padding: 0 }}>
                     {text}

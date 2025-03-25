@@ -119,7 +119,7 @@ const BaseRoleLayout = ({
                             <Text strong>{user.fullName}</Text> {/* Display full name and use Text component */}
                         </div>
                     )}
-                    <Button type="primary" danger onClick={handleLogout}>
+                    <Button type="primary" secondary onClick={handleLogout}>
                         Logout
                     </Button>
                 </div>
