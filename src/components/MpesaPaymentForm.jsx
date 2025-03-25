@@ -268,7 +268,7 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
                             style={{ backgroundColor: '#b5e487', borderColor: 'maroon', color: 'black' }}
                             disabled={loading || paymentStatus === 'pending'}
                         >
-                            Initiate M-Pesa Payment
+                            Donate
                         </Button>
                     </Form.Item>
                 </Form>
