@@ -1,5 +1,4 @@
-// src/pages/VerificationPage.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout, Button, Typography, Alert, Spin, Form, Input } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
@@ -13,59 +12,67 @@ const { Title, Paragraph } = Typography;
 const VerificationPage = () => {
     const { token } = useParams();
     const [verificationStatus, setVerificationStatus] = useState('pending');
-    const [message, setMessage] = useState('');
+    const [message, setMessage] = useState('Verifying your email...');
     const navigate = useNavigate();
     const [resendStatus, setResendStatus] = useState('idle');
     const [resendMessage, setResendMessage] = useState('');
     const [resendEmailForm] = Form.useForm();
-    const [showResendOption, setShowResendOption] = useState(false); // New state
-
-    console.log('Received Token:', token);
+    const [showResendOption, setShowResendOption] = useState(false);
+    const timerRef = useRef();
+    const hasVerifiedRef = useRef(false);
 
     useEffect(() => {
-        let timer; // Declare timer outside the try/catch block but inside useEffect scope
         const verifyEmail = async () => {
-            setVerificationStatus('pending');
-            setShowResendOption(false); // Initially hide resend option
-            setMessage('Waiting for verification...'); // Initial message
+            // Prevent multiple verification attempts
+            if (hasVerifiedRef.current) return;
+            hasVerifiedRef.current = true;
 
-            // Set timeout to show resend option after 15 seconds
-            timer = setTimeout(() => { // Assign timer here
-                setShowResendOption(true);
-                if (verificationStatus === 'pending') {
-                    setMessage('Verification still pending. You can resend the email.'); // Update message if still pending
+            setVerificationStatus('pending');
+            setShowResendOption(false);
+            setMessage('Verifying your email...');
+
+            const statusRef = { current: 'pending' };
+
+            // Use timerRef to store the timeout ID
+            timerRef.current = setTimeout(() => {
+                if (statusRef.current === 'pending') {
+                    setShowResendOption(true);
+                    setMessage('Verification is taking longer than expected. You can resend the email.');
                 }
-            }, 15000); // 15 seconds
+            }, 15000);
 
             try {
                 const response = await axios.get(`${API_URL}/auth/verify-email/${token}`);
-                console.log("Verification Response:", response);
+                statusRef.current = 'success';
                 setVerificationStatus('success');
                 setMessage(response.data.message);
-                clearTimeout(timer); // Clear timeout if verification succeeds before 15 seconds
-                setTimeout(() => {
-                    navigate('/login', { replace: true });
-                }, 3000);
+                setShowResendOption(false);
+                clearTimeout(timerRef.current);
+
+                // Redirect after a short delay
+                setTimeout(() => navigate('/login', { replace: true }), 3000);
             } catch (error) {
-                console.error('Email verification failed:', error);
-                console.error("Verification Error Response:", error.response);
+                statusRef.current = 'error';
                 setVerificationStatus('error');
                 setMessage(error.response?.data?.message || 'Email verification failed. Please try again or contact support.');
-                setShowResendOption(true); // Show resend option immediately on error
-                clearTimeout(timer); // Clear timeout if verification fails before 15 seconds
+                setShowResendOption(true);
+                clearTimeout(timerRef.current);
             }
         };
 
-        if (token) {
-            verifyEmail();
-        } else {
+        if (token) verifyEmail();
+        else {
             setVerificationStatus('error');
             setMessage('Invalid verification link.');
-            setShowResendOption(true); // Show resend option immediately if token is invalid
+            setShowResendOption(true);
         }
 
-        return () => clearTimeout(timer); // Cleanup timeout on unmount
-    }, []);
+        // Cleanup: clear timeout using timerRef
+        return () => {
+            clearTimeout(timerRef.current);
+            hasVerifiedRef.current = true;
+        };
+    }, [token, navigate]);
 
     const handleResendEmail = async (values) => {
         setResendStatus('pending');
@@ -165,22 +172,7 @@ const VerificationPage = () => {
                         />
                     </div>
 
-                    {verificationStatus === 'pending' && !showResendOption && (
-                        <div>
-                            <Spin size="large" />
-                            <Paragraph style={{ marginTop: '20px' }}>{message}</Paragraph> {/* Display "Waiting for verification..." */}
-                        </div>
-                    )}
-
-                    {verificationStatus === 'pending' && showResendOption && (
-                        <div>
-                            <Paragraph style={{ marginTop: '20px', marginBottom: '1.5rem' }}>{message}</Paragraph> {/* Display "Verification still pending. You can resend the email." */}
-                            {resendUI()}
-                        </div>
-                    )}
-
-
-                    {verificationStatus === 'success' && (
+                    {verificationStatus === 'success' ? (
                         <div>
                             <Alert
                                 message={<Paragraph style={{ marginBottom: 0 }}><strong>Success!</strong> {message} You will be redirected to login page shortly.</Paragraph>}
@@ -192,9 +184,7 @@ const VerificationPage = () => {
                                 Redirecting to Login...
                             </Button>
                         </div>
-                    )}
-
-                    {verificationStatus === 'error' && showResendOption && (
+                    ) : verificationStatus === 'error' ? (
                         <div>
                             <Alert
                                 message={<Paragraph style={{ marginBottom: 0 }}><strong>Verification Failed!</strong> {message}</Paragraph>}
@@ -202,10 +192,17 @@ const VerificationPage = () => {
                                 showIcon
                                 style={{ marginBottom: '1.5rem' }}
                             />
-                            {resendUI()}
+                            {showResendOption && resendUI()}
                             <Button style={{ width: '100%' }}>
                                 <Link to="/">Back to Home</Link>
                             </Button>
+                        </div>
+                    ) : (
+                        <div>
+                            <Spin size="large" />
+                            <Paragraph style={{ marginTop: '20px' }}>{message}</Paragraph>
+                            {/* Only show resend UI if NOT success */}
+                            {verificationStatus !== 'success' && showResendOption && resendUI()}
                         </div>
                     )}
                 </div>
