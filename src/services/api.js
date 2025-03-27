@@ -76,7 +76,7 @@ export const getFundsOverview = async () => {
     return axios.get(`${API_URL}/admin/dashboard-metrics`);
 };
 
-// In api.js - temporarily replace initiateMpesaPayment with this:
+// initiateMpesaPayment with this:
 export const initiateMpesaPayment = async (paymentData) => {
     const token = localStorage.getItem('token');
     try {
@@ -96,5 +96,45 @@ export const initiateMpesaPayment = async (paymentData) => {
     } catch (error) {
         console.error("Fetch API Error initiating M-Pesa payment:", error);
         return { message: 'Payment initiation failed', error: error.message };
+    }
+};
+
+// ADD THIS FUNCTION for Member Password Change
+export const changeMemberPassword = async (passwordData, token) => {
+    try {
+        const response = await axios.put(
+            `${API_URL}/member/profile/change-password`,
+            passwordData, // { currentPassword, newPassword }
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        return response.data; // { message: "Password updated successfully." }
+    } catch (error) {
+        console.error("Change Member Password API error:", error.response?.data || error.message);
+        throw error.response?.data || { message: 'Network error or password change failed.' };
+    }
+};
+
+// ADD THIS FUNCTION for Admin Password Change
+export const changeAdminPassword = async (passwordData, token) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/admin/change-password`,
+            passwordData, // { currentPassword, newPassword }
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        return response.data; // { message: "Admin password changed successfully." }
+    } catch (error) {
+        console.error("Change Admin Password API error:", error.response?.data || error.message);
+        throw error.response?.data || { message: 'Network error or password change failed.' };
     }
 };

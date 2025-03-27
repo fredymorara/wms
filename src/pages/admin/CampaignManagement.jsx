@@ -452,7 +452,7 @@ const CampaignManagementPage = () => {
 
                 {/* Campaign Details Modal */}
                 <Modal
-                    title={selectedCampaignForDetails?.title || 'Campaign Details'}
+                    title={<Title level={4} style={{ color: 'maroon', textAlign: 'center' }}>{selectedCampaignForDetails?.title || 'Campaign Details'}</Title>}
                     visible={isDetailsModalVisible}
                     onCancel={handleDetailsModalCancel}
                     footer={null}
@@ -490,7 +490,7 @@ const CampaignManagementPage = () => {
 
                 {/* Approval Modal */}
                 <Modal
-                    title={`Approve/Reject: ${selectedCampaignForApproval?.title || 'Campaign'}`}
+                    title={<Title level={4} style={{ color: 'maroon', marginBottom: '0', textAlign: 'center' }}>{`Approve/Reject: ${selectedCampaignForApproval?.title || 'Campaign'}`}</Title>}
                     visible={isApprovalModalVisible}
                     onCancel={handleApprovalModalCancel}
                     footer={null}
@@ -498,13 +498,13 @@ const CampaignManagementPage = () => {
                 >
                     {selectedCampaignForApproval && (
                         <div style={{ padding: 16 }}>
-                            <Title level={4} style={{ color: 'maroon' }}>Campaign Request Details</Title>
+                            <Title level={5} style={{ color: 'maroon', textAlign: 'center' }}>Campaign Request Details</Title>
                             <Paragraph><strong>Requester:</strong> {selectedCampaignForApproval.requesterName}</Paragraph>
                             <Paragraph><strong>Date Requested:</strong> {new Date(selectedCampaignForApproval.createdAt).toLocaleDateString()}</Paragraph>
                             <Paragraph><strong>Description:</strong> {selectedCampaignForApproval.description}</Paragraph>
 
                             <div style={{ padding: 16, backgroundColor: '#f7f5f5', borderRadius: 8, marginTop: 16 }}>
-                                <Title level={5} style={{ color: 'maroon' }}>Supporting Documents</Title>
+                                <Title level={5} style={{ color: 'maroon', textAlign: 'center' }}>Supporting Documents</Title>
                                 <Paragraph>{selectedCampaignForApproval.details}</Paragraph>
                             </div>
 

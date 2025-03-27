@@ -43,7 +43,6 @@ const LandingPage = () => {
     return (
         <Layout
             style={{
-                background: 'linear-gradient(to bottom, #F8E8EC 70%, #d9f7be)',
                 minHeight: '100vh',
                 overflow: 'auto',
             }}

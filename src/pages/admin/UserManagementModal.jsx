@@ -162,7 +162,7 @@ const UserManagementModal = ({ visible, onCancel }) => {
 
     return (
         <Modal
-            title="Manage Users"
+            title={<Title level={4} style={{ color: 'maroon', textAlign: 'center' }}>User Management</Title>}
             visible={visible}
             onCancel={onCancel}
             footer={null}

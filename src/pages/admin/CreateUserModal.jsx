@@ -52,7 +52,7 @@ const CreateUserModal = ({ visible, onCancel, onCreated }) => { // Receive visib
 
     return (
         <Modal
-            title="Create New User"
+            title={<Title level={4} style={{ color: 'maroon', textAlign: 'center' }}>Create New User</Title>}
             visible={visible}
             onCancel={onCancel}
             footer={null}

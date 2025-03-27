@@ -1,21 +1,15 @@
+// src/pages/admin/AdminProfilePage.jsx
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layout/AdminLayout';
 import {
-    Typography,
-    Form,
-    Input,
-    Button,
-    Avatar,
-    Spin,
-    Alert,
-    Typography as AntTypography, // Import Typography again as Text
-    message, // Import message
+    Typography, Form, Input, Button, Avatar, Spin, Alert, message
 } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { API_URL } from '../../services/api'; // Assuming you have API_URL defined here
+import { API_URL } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
+import { changeAdminPassword } from '../../services/api'; // Import the specific API function
 
-const { Title, Paragraph } = Typography;
-const { Text } = AntTypography; // Use Text from AntTypography
+const { Title, Paragraph, Text } = Typography;
 
 const AdminProfilePage = () => {
     const [profileData, setProfileData] = useState(null);
@@ -25,21 +19,33 @@ const AdminProfilePage = () => {
     const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(null);
     const [passwordChangeError, setPasswordChangeError] = useState(null);
     const [form] = Form.useForm();
+    const { user, token, isLoading } = useAuth(); // Get token from AuthContext
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    };
+    const getAuthHeaders = () => ({ // Keep this helper if used elsewhere, otherwise use token directly
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    });
 
     useEffect(() => {
         const fetchProfile = async () => {
+            // --- ADD LOG ---
+            console.log('AdminProfilePage useEffect - isLoading:', isLoading, 'token:', token);
+            if (isLoading) {
+                console.log('AdminProfilePage useEffect - Still loading auth, skipping fetch.');
+                setLoading(false); // Prevent showing component loading spinner if auth is loading
+                return;
+            }
+            if (!token) {
+                console.error('AdminProfilePage useEffect - No token found, cannot fetch profile.');
+                setLoading(false);
+                setError("Authentication token not found. Please log in again.");
+                return; // Exit if no token
+            }
+            // --- END ADD LOG ---
             setLoading(true);
             setError(null);
             try {
-                const response = await fetch(`${API_URL}/admin/profile`, { // Use API_URL here
+                const response = await fetch(`${API_URL}/admin/profile`, {
                     headers: getAuthHeaders()
                 });
                 if (!response.ok) {
@@ -54,45 +60,65 @@ const AdminProfilePage = () => {
             }
         };
 
-        fetchProfile();
-    }, []);
+        if (token) { // Ensure token exists before fetching
+            fetchProfile();
+        } else {
+            setLoading(false);
+            setError("Authentication token not found.");
+        } fetchProfile();
+    }, [token, isLoading]); // Add token dependency
 
+    // --- UPDATE THIS FUNCTION ---
     const onFinish = async (values) => {
+        // --- ADD LOG ---
+        console.log('AdminProfilePage onFinish - token:', token);
+        if (!token) {
+            message.error('Authentication error. Please log in again.');
+            setPasswordChangeError('Authentication error. Please log in again.'); // Also set state error
+            return; // Prevent API call if no token
+        }
+        if (isLoading) {
+            message.error('Authentication still loading. Please wait and try again.');
+            return; // Prevent API call if auth is loading
+        }
+        // --- END ADD LOG ---
         setPasswordChangeLoading(true);
         setPasswordChangeError(null);
         setPasswordChangeSuccess(null);
         try {
-            const response = await fetch(`${API_URL}/admin/change-password`, { // Use API_URL here
-                method: 'POST',
-                headers: getAuthHeaders(), // Include auth headers
-                body: JSON.stringify(values),
-            });
+            // Use the imported API function
+            const response = await changeAdminPassword(
+                {
+                    currentPassword: values.currentPassword,
+                    newPassword: values.newPassword,
+                },
+                token // Pass the token
+            );
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Password change failed: HTTP status ${response.status}`);
-            }
+            setPasswordChangeSuccess(response.message);
+            form.resetFields(['currentPassword', 'newPassword', 'confirmPassword']); // Reset password fields
+            message.success(response.message);
 
-            setPasswordChangeSuccess('Password changed successfully!');
-            form.resetFields();
-            message.success('Password changed successfully!'); // Ant Design message for success
         } catch (e) {
-            setPasswordChangeError(e.message);
-            message.error(`Password change error: ${e.message}`); // Ant Design message for error
+            const errorMsg = e.message || 'An unexpected error occurred.';
+            setPasswordChangeError(errorMsg);
+            message.error(`Password change error: ${errorMsg}`);
         } finally {
             setPasswordChangeLoading(false);
         }
     };
+    // --- END OF UPDATE ---
 
     const onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);
-        setPasswordChangeError('Password change form submission failed. Please check the fields.');
-        message.error('Password change form submission failed. Please check the fields.'); // Ant Design message for form error
+        // Removed setPasswordChangeError here, Ant Design validation handles field errors
+        message.error('Password change form has errors. Please check the fields.');
     };
 
     return (
         <AdminLayout>
             <div style={{ padding: '24px' }}>
+                {/* ... Header and Profile View ... */}
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                     <Title level={2} style={{ color: 'maroon' }}>
                         Admin Profile
@@ -103,28 +129,30 @@ const AdminProfilePage = () => {
                 </div>
 
                 {loading && <Spin tip="Loading Profile..." style={{ display: 'block', marginBottom: 24 }} />}
-                {error && <Alert message={`Error fetching profile: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: 24 }} />}
+                {error && !loading && <Alert message={`Error fetching profile: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: 24 }} />}
 
                 {profileData && !loading && !error && (
                     <div style={{ maxWidth: 600, margin: '0 auto' }}>
+                        {/* ... Profile Avatar and Details ... */}
                         <div style={{ textAlign: 'center', marginBottom: 24 }}>
                             <Avatar size={100} icon={<UserOutlined />} src={profileData.profilePicture} />
-                            <Title level={4} style={{ marginTop: 16, color: 'maroon' }}>{profileData.fullName || profileData.name || 'Admin User'}</Title>
+                            <Title level={4} style={{ marginTop: 16, color: 'maroon' }}>{profileData.fullName || 'Admin User'}</Title>
                             <Paragraph>{profileData.email}</Paragraph>
                             <Paragraph>Role: Administrator</Paragraph>
                         </div>
+
 
                         <div style={{ borderTop: '2px solid #f0f0f0', paddingTop: 24, marginBottom: 24 }}>
                             <Title level={4} style={{ color: 'maroon' }}>Change Password</Title>
                             <Paragraph>Secure your account by updating your password regularly.</Paragraph>
 
+                            {/* --- Ensure form name matches --- */}
                             <Form
                                 form={form}
                                 layout="vertical"
-                                name="changePasswordForm"
+                                name="adminChangePasswordForm" // Unique name for the form
                                 onFinish={onFinish}
                                 onFinishFailed={onFinishFailed}
-                                initialValues={{ remember: true }}
                             >
                                 <Form.Item
                                     label={<Text strong>Current Password</Text>}
@@ -139,7 +167,8 @@ const AdminProfilePage = () => {
                                     name="newPassword"
                                     rules={[
                                         { required: true, message: 'Please enter a new password.' },
-                                        { min: 6, message: 'Password must be at least 6 characters long.' },
+                                        { min: 8, message: 'Password must be at least 8 characters long.' },
+                                        // Add more complex regex validation if desired
                                     ]}
                                 >
                                     <Input.Password placeholder="New Password" />
@@ -149,6 +178,7 @@ const AdminProfilePage = () => {
                                     label={<Text strong>Confirm New Password</Text>}
                                     name="confirmPassword"
                                     dependencies={['newPassword']}
+                                    hasFeedback // Adds feedback icons
                                     rules={[
                                         { required: true, message: 'Please confirm your new password.' },
                                         ({ getFieldValue }) => ({
@@ -175,9 +205,9 @@ const AdminProfilePage = () => {
                                     </Button>
                                 </Form.Item>
                             </Form>
-
-                            {passwordChangeSuccess && <Alert message={passwordChangeSuccess} type="success" showIcon style={{ marginTop: 16 }} />}
-                            {passwordChangeError && <Alert message={`Password change error: ${passwordChangeError}`} type="error" showIcon style={{ marginTop: 16 }} />}
+                            {/* --- Display feedback messages --- */}
+                            {passwordChangeSuccess && <Alert message={passwordChangeSuccess} type="success" showIcon style={{ marginTop: 16 }} closable onClose={() => setPasswordChangeSuccess(null)} />}
+                            {passwordChangeError && <Alert message={`${passwordChangeError}`} type="error" showIcon style={{ marginTop: 16 }} closable onClose={() => setPasswordChangeError(null)} />}
                         </div>
                     </div>
                 )}

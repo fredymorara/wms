@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Breadcrumb, Avatar, theme, Button, Typography } from 'antd'; // Import Button and Typography
 import { Link, useLocation } from 'react-router-dom';
-import { MenuOutlined, CloseOutlined, UserOutlined } from '@ant-design/icons';
+import { MenuOutlined, CloseOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import logo from '../assets/Kabarak_University_Extended_logo_910x256.png';
 import { API_URL } from '../services/api'; // Import API_URL
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth
@@ -108,19 +108,9 @@ const BaseRoleLayout = ({
 
                 {/* User Profile and Logout Button */}
                 <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-                    {showUserProfile && user && (
-                        <div style={{ display: 'flex', alignItems: 'center', color: 'black', marginRight: 20 }}> {/* Adjusted color to black and added margin */}
-                            <Avatar
-                                src={user.profilePicture} // Ensure this is populated
-                                size="large"
-                                icon={<UserOutlined />}
-                                style={{ marginRight: 8 }}
-                            />
-                            <Text strong>{user.fullName}</Text> {/* Display full name and use Text component */}
-                        </div>
-                    )}
-                    <Button type="primary" secondary onClick={handleLogout}>
-                        Logout
+
+                    <Button danger onClick={handleLogout} icon={<LogoutOutlined />}>
+
                     </Button>
                 </div>
 

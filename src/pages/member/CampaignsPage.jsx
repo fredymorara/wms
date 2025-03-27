@@ -141,8 +141,8 @@ function CampaignsPage() {
                         {paginatedCampaigns.length > 0 ? (
                             paginatedCampaigns.map(campaign => (
                                 <Col key={campaign.id} xs={24} sm={24} md={12} lg={8}>
-                                    <Card style={{ borderRadius: 6, border: '1px solid', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', marginBottom: 16, padding: isMobile ? '0px' : '24px' }}>
-                                        <Title level={4} style={{ color: 'maroon', marginBottom: 8 }}>{campaign.title}</Title>
+                                    <Card style={{ borderRadius: 6, border: '1px solid green', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', marginBottom: 16, padding: isMobile ? '0px' : '24px' }}>
+                                        <Title level={4} style={{ marginBottom: 8 }}>{campaign.title}</Title>
                                         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>{campaign.category}</Text>
                                         <Progress
                                             percent={Math.min(Math.round((campaign.raised / campaign.goal) * 100), 100)}
@@ -170,7 +170,7 @@ function CampaignsPage() {
                             </Col>
                         )}
                     </Row>
-                    
+
                     {/* Pagination Controls */}
                     {filteredCampaigns.length > pageSize && (
                         <div style={{ marginTop: 32, textAlign: 'center' }}>
@@ -196,7 +196,7 @@ function CampaignsPage() {
 
                 {/* Campaign Details Modal */}
                 <Modal
-                    title={selectedCampaign?.title || 'Campaign Details'}
+                    title={<Title level={3} style={{ color: 'maroon', marginBottom: '0', textAlign: 'center' }}>Contribution Form</Title>}
                     visible={isModalVisible}
                     onCancel={handleCancel}
                     footer={null}

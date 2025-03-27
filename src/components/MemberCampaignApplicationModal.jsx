@@ -58,7 +58,7 @@ const MemberCampaignApplicationModal = ({ visible, onCancel, onCreated }) => { /
 
     return (
         <Modal
-            title="Apply for Welfare Campaign Funding"
+            title={<Title level={3} style={{ color: 'maroon', marginBottom: '0', textAlign: 'center' }}>Apply for Welfare Campaign Funding</Title>}
             visible={visible}
             onCancel={onCancel}
             footer={null}

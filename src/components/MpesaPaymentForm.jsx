@@ -170,13 +170,13 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
                 <Card
                     style={{
                         borderRadius: 6,
-                        border: '1px solid',
+                        border: '1px solid green',
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                         marginBottom: 24,
                         padding: 16,
                     }}
                 >
-                    <Title level={4} style={{ color: 'maroon', marginBottom: 8 }}>
+                    <Title level={3} style={{ marginBottom: 8, textAlign: 'center' }}>
                         {campaign.title || "No Title Available"}
                     </Title>
                     <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>

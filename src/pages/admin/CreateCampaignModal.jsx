@@ -57,7 +57,7 @@ const CreateCampaignModal = ({ visible, onCancel, onCreated }) => { // Receive v
 
     return (
         <Modal
-            title="Create New Campaign"
+            title={<Title level={4} style={{ color: 'maroon', marginBottom: '0', textAlign: 'center' }}>Create New Campaign</Title>}
             visible={visible}
             onCancel={onCancel}
             footer={null}

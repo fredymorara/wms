@@ -47,17 +47,21 @@ const MemberDashboardPage = () => {
                     })));
                 }
 
-                // Fetch recent activity - CHANGED ENDPOINT
+                // Fetch recent activity - Filter only completed contributions
                 const contributionsResponse = await fetch(`${API_URL}/member/my-recent-activity`, { headers: getAuthHeaders() });
                 if (contributionsResponse.ok) {
                     const contributionsData = await contributionsResponse.json();
-                    setRecentActivity(contributionsData.data.map(c => ({ // Access data.data
-                        id: c._id,
-                        description: `Contributed KES ${c.amount} to ${c.campaign?.title}`, // Simpler description
-                        date: c.paymentDate || c.createdAt || new Date().toISOString(), // Use paymentDate if available
-                    })));
+                    const completedContributions = contributionsData.data
+                        .filter(contribution => contribution.status === 'completed')
+                        .map(c => ({
+                            id: c._id,
+                            description: `Contributed KES ${c.amount} to ${c.campaign?.title}`,
+                            date: c.paymentDate || c.createdAt || new Date().toISOString(),
+                            mpesaCode: c.mpesaCode,
+                            status: c.status
+                        }));
+                    setRecentActivity(completedContributions);
                 } else {
-                    // Handle error for fetching recent activity if needed
                     console.error("Failed to fetch recent activity:", contributionsResponse.statusText);
                 }
 
@@ -107,11 +111,11 @@ const MemberDashboardPage = () => {
                     </div>
                     <Row gutter={[24, 24]}>
                         {campaigns
-                            .slice(0, isMobile ? 2 : 4) // Limiting campaigns based on screen size
+                            .slice(0, isMobile ? 2 : 4)
                             .map(campaign => (
                                 <Col key={campaign.id} xs={24} md={12} lg={8} xl={6}>
                                     <div style={{
-                                        border: '1px solid',
+                                        border: '1px solid green',
                                         borderRadius: 8,
                                         padding: 16,
                                         marginBottom: 16,
@@ -231,7 +235,14 @@ const MemberDashboardPage = () => {
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                 }}>
-                                    <Text style={{ flex: 1 }}>{activity.description}</Text>
+                                    <div>
+                                        <Text style={{ flex: 1 }}>{activity.description}</Text>
+                                        {activity.mpesaCode && (
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                . {activity.mpesaCode}
+                                            </Text>
+                                        )}
+                                    </div>
                                     <Text type="secondary" style={{ marginLeft: 16 }}>
                                         {new Date(activity.date).toLocaleDateString('en-GB')}
                                     </Text>
@@ -245,7 +256,7 @@ const MemberDashboardPage = () => {
                                 borderRadius: 8,
                             }}>
                                 <Text type="secondary">
-                                    No contribution history yet. Start contributing to campaigns to see your activity here.
+                                    No completed contributions yet. Your completed contributions will appear here.
                                 </Text>
                             </div>
                         )}
@@ -271,7 +282,7 @@ const MemberDashboardPage = () => {
 
                 {/* M-Pesa Payment Modal */}
                 <Modal
-                    title={selectedCampaign?.title || 'Campaign Details'}
+                    title={<Title level={3} style={{ color: 'maroon', marginBottom: '0', textAlign: 'center' }}>Contribution Form</Title>}
                     visible={isModalVisible}
                     onCancel={() => setIsModalVisible(false)}
                     footer={null}
@@ -283,7 +294,7 @@ const MemberDashboardPage = () => {
                             initialAmount={quickContributionAmount}
                             onPaymentSuccess={() => {
                                 setIsModalVisible(false);
-                                setRefreshKey(prev => prev + 1); // Trigger refresh
+                                setRefreshKey(prev => prev + 1);
                             }}
                             onPaymentError={setError}
                         />
