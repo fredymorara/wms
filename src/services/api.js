@@ -138,3 +138,27 @@ export const changeAdminPassword = async (passwordData, token) => {
         throw error.response?.data || { message: 'Network error or password change failed.' };
     }
 };
+
+// --- NEW Function: Initiate Campaign Disbursement (Admin) ---
+export const initiateCampaignDisbursement = async (campaignId, disbursementData) => {
+    // disbursementData should contain { recipientPhone, amount, recipientName?, remarks? }
+    try {
+        // Retrieve token from localStorage or context if not using Axios interceptor
+        const token = localStorage.getItem('token');
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+        // Make sure API_URL is correctly defined/imported
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'; // Or your actual API base URL
+
+        const response = await axios.post(
+            `${API_URL}/admin/campaigns/${campaignId}/initiate-disbursement`,
+            disbursementData,
+            config // Pass config with headers
+        );
+        return response.data; // Contains { message, conversationId, campaignStatus, disbursementStatus }
+    } catch (error) {
+        console.error('Error initiating campaign disbursement:', error.response?.data || error.message);
+        // Rethrow a more specific error message if available
+        throw new Error(error.response?.data?.message || error.message || 'Failed to initiate disbursement');
+    }
+};

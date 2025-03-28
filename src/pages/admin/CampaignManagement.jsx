@@ -365,20 +365,6 @@ const CampaignManagementPage = () => {
                 return <Tag color={color}>{status.toUpperCase()}</Tag>;
             },
         },
-        {
-            title: 'Actions',
-            key: 'actions',
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button size="small" onClick={() => showDetailsModal(record)}>View Details</Button>
-                    {record.status === 'ended' && (
-                        <Button size="small" type="primary" onClick={() => handleDisburseFunds(record._id)} loading={isActionLoading}>
-                            Disburse Funds
-                        </Button>
-                    )}
-                </Space>
-            ),
-        },
     ];
 
     return (
