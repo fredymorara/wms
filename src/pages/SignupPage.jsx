@@ -82,7 +82,7 @@ const SignupPage = () => {
                     <span className="hidden sm:inline text-xl text-white md:text-2xl lg:text-3xl">
                         Kabarak Student Welfare Management System
                     </span>
-                    <span className="sm:hidden text-lg text-white md:text-xl">KSW System</span>
+                    <span className="sm:hidden text-lg text-white md:text-xl">Student Welfare</span>
                 </Title>
                 <div className="ml-4">
                     <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>

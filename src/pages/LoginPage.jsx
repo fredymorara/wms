@@ -68,7 +68,7 @@ const LoginPage = () => {
                     className="text-white mx-auto text-center flex-1"
                 >
                     <span className="hidden sm:inline text-white text-xl md:text-2xl lg:text-3xl">Kabarak Student Welfare Management System</span>
-                    <span className="sm:hidden text-white text-lg md:text-xl">KSW System</span>
+                    <span className="sm:hidden text-white text-lg md:text-xl">Student Welfare</span>
                 </Title>
                 <div className="ml-4">
                     <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
