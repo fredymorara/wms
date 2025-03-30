@@ -1,38 +1,52 @@
 import React, { useState } from 'react';
-import { Layout, Button, Typography, Form, Input, Alert } from 'antd';
+import { Layout, Button, Typography, Form, Input, Alert, Spin } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from '../assets/kabu-logo-Beveled-shadow.png';
-import { login } from '../services/api'; // Import the login function from api.js
+import { login } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const { Header, Content, Footer } = Layout;
 const { Title } = Typography;
 
 const LoginPage = () => {
-    const { login: authLogin } = useAuth(); // Rename to avoid conflict
+    const { login: authLogin } = useAuth();
     const navigate = useNavigate();
     const [feedback, setFeedback] = useState({ type: '', message: '' });
+    const [loading, setLoading] = useState(false);
 
     const onFinish = async (values) => {
+        setLoading(true);
+        setFeedback({ type: '', message: '' });
+
         try {
-            const response = await login(values); // Call the login function from api.js
-            authLogin(response.user, response.token); // Use AuthContext's login method
+            const response = await login(values);
+            authLogin(response.user, response.token);
             navigate(response.user.role === 'admin' ? '/admin/dashboard' : '/member/dashboard');
         } catch (error) {
+            let errorMessage = 'Login failed. Please try again.';
+
+            if (error.message.includes('Network Error')) {
+                errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+            } else if (error.response?.status === 401) {
+                errorMessage = error.response.data.message || 'Invalid credentials';
+            } else if (error.response?.status === 403) {
+                errorMessage = 'Your account is inactive. Please contact the administrator.';
+            } else if (error.response?.data?.message?.includes('verify your email')) {
+                errorMessage = 'Please verify your email address before logging in.';
+            }
+
             setFeedback({
                 type: 'error',
-                message: error.response?.data?.message || 'Login failed. Check your credentials.',
+                message: errorMessage,
             });
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <Layout
-            style={{
-                minHeight: '100vh',
-            }}
-        >
+        <Layout style={{ minHeight: '100vh' }}>
             <Header
                 style={{
                     background: 'maroon',
@@ -47,9 +61,7 @@ const LoginPage = () => {
                 <img
                     src={logo}
                     alt="Kabarak University Logo"
-                    style={{
-                        height: '60px',
-                    }}
+                    style={{ height: '60px' }}
                 />
                 <Title
                     level={4}
@@ -81,8 +93,29 @@ const LoginPage = () => {
                         borderRadius: 10,
                         backgroundColor: 'rgba(255, 255, 255, 0.7)',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        position: 'relative',
                     }}
                 >
+                    {loading && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                zIndex: 1,
+                                borderRadius: 10,
+                            }}
+                        >
+                            <Spin size="large" tip="Authenticating..." />
+                        </div>
+                    )}
+
                     <div>
                         <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '0.3rem' }}>
                             Login
@@ -98,12 +131,10 @@ const LoginPage = () => {
                         />
                     </div>
 
-
-                    {/* Feedback Message */}
                     {feedback.message && (
                         <Alert
                             message={feedback.message}
-                            type={feedback.type} // "success" or "error"
+                            type={feedback.type}
                             showIcon
                             style={{ marginBottom: '1.5rem' }}
                         />
@@ -134,8 +165,9 @@ const LoginPage = () => {
                                 type="primary"
                                 htmlType="submit"
                                 style={{ width: '100%', backgroundColor: '#b5e487', color: "black", borderColor: 'maroon' }}
+                                disabled={loading}
                             >
-                                Log In
+                                {loading ? 'Processing...' : 'Log In'}
                             </Button>
                         </Form.Item>
                         <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Button, Typography, Form, Input, Alert } from 'antd';
+import { Layout, Button, Typography, Form, Input, Alert, Spin } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
 import logo from '../assets/kabu-logo-Beveled-shadow.png';
@@ -12,53 +12,53 @@ const SignupPage = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [feedback, setFeedback] = useState({ type: '', message: '' });
+    const [loading, setLoading] = useState(false);
 
     const onFinish = async (values) => {
-        const { email, password, confirmPassword, fullName, admissionNumber } = values;
-
-        if (!email.endsWith('@kabarak.ac.ke')) {
-            setFeedback({ type: 'error', message: 'Only emails ending with @kabarak.ac.ke are allowed.' });
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setFeedback({ type: 'error', message: 'Passwords do not match.' });
-            return;
-        }
+        setLoading(true);
+        setFeedback({ type: '', message: '' });
 
         try {
+            if (values.password !== values.confirmPassword) {
+                throw new Error('The two passwords do not match!');
+            }
+
             const response = await register({
-                email,
-                password,
-                fullName,
-                admissionNumber,
+                email: values.email,
+                password: values.password,
+                fullName: values.fullName,
+                admissionNumber: values.admissionNumber,
                 role: 'member',
             });
 
-            if (response.user) {
-                setFeedback({
-                    type: 'success',
-                    message: 'Registration successful! Please check your email to verify your account.'
-                });
-            } else {
-                setFeedback({ type: 'error', message: response.message || 'Signup failed. Please try again.' });
-            }
+            setFeedback({
+                type: 'success',
+                message: 'Registration successful! Please check your email to verify your account. Also check Spam!'
+            });
+            form.resetFields();
         } catch (error) {
-            console.error('Registration error:', error);
-            if (error.response?.data?.message === 'User already exists') {
-                setFeedback({ type: 'error', message: 'A user with this email or admission number already exists.' });
+            let errorMessage = 'Registration failed. Please try again.';
+
+            if (error.message.includes('Network Error')) {
+                errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+            } else if (error.response?.data?.message === 'User already exists') {
+                errorMessage = 'A user with this email or admission number already exists.';
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.message.includes('@kabarak.ac.ke')) {
+                errorMessage = 'Only @kabarak.ac.ke emails are allowed.';
             } else {
-                setFeedback({ type: 'error', message: error.message || 'Signup failed. Please try again.' });
+                errorMessage = error.message || errorMessage;
             }
+
+            setFeedback({ type: 'error', message: errorMessage });
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <Layout
-            style={{
-                minHeight: '100vh',
-            }}
-        >
+        <Layout style={{ minHeight: '100vh' }}>
             <Header
                 style={{
                     background: 'maroon',
@@ -107,8 +107,29 @@ const SignupPage = () => {
                         borderRadius: 10,
                         backgroundColor: 'rgba(255, 255, 255, 0.7)',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        position: 'relative',
                     }}
                 >
+                    {loading && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                zIndex: 1,
+                                borderRadius: 10,
+                            }}
+                        >
+                            <Spin size="large" tip="Registering..." />
+                        </div>
+                    )}
+
                     <div>
                         <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '0.3rem' }}>
                             Sign Up
@@ -190,8 +211,9 @@ const SignupPage = () => {
                                 type="primary"
                                 htmlType="submit"
                                 style={{ width: '100%', backgroundColor: '#b5e487', color: 'black', borderColor: 'maroon' }}
+                                disabled={loading}
                             >
-                                Sign Up
+                                {loading ? 'Creating Account...' : 'Sign Up'}
                             </Button>
                         </Form.Item>
                         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
