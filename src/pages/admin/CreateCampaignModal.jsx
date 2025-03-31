@@ -124,14 +124,6 @@ const CreateCampaignModal = ({ visible, onCancel, onCreated }) => { // Receive v
                     <DatePicker format="YYYY-MM-DD" disabledDate={(current) => current && current < dayjs().startOf('day')} />
                 </Form.Item>
 
-                <Form.Item
-                    label="Tracking Number"
-                    name="trackingNumber"
-                    rules={[{ required: true, message: 'Please enter a unique tracking number!' }]}
-                >
-                    <Input placeholder="Unique Tracking Number (e.g., CMP-2024-001)" />
-                </Form.Item>
-
                 <Form.Item style={{ textAlign: 'right' }}>
                     <Button onClick={onCancel} style={{ marginRight: 8 }}>
                         Cancel
