@@ -71,23 +71,32 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
 
     const startPolling = (checkoutRequestId) => {
         const intervalId = setInterval(async () => {
-            if (Date.now() - startTime > timeoutDuration) {
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime > timeoutDuration) {
                 clearInterval(intervalId);
                 setPaymentStatus('cancelled'); // Treat timeout as cancellation
                 setError('Payment verification timed out. Please check your M-Pesa and contribution history later.');
                 return;
             }
+
             try {
-                const response = await fetch(`${API_URL}/contributions/status/${checkoutRequestId}`, { // Backend endpoint to check status
+                // Add a timestamp parameter to prevent caching
+                const response = await fetch(`${API_URL}/contributions/status/${checkoutRequestId}?_t=${Date.now()}`, {
                     headers: {
                         'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
                     },
                 });
+
                 if (!response.ok) {
                     console.error('Error polling payment status:', response.status, response.statusText);
                     return; // Don't set error here, just retry
                 }
+
                 const data = await response.json();
+                console.log('Payment status poll result:', data);
+
                 if (data.status === 'completed') {
                     clearInterval(intervalId);
                     setPaymentStatus('success');
@@ -103,14 +112,27 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
                 // 'pending' status will continue polling
             } catch (error) {
                 console.error('Error during status polling:', error);
-                // Do not set error state to allow retry on next poll.
-                // In a real app, you might want to handle network errors more gracefully.
+                // Implement exponential backoff for network errors
+                // This could be enhanced in a production version
             }
         }, pollInterval);
+
+        // Save the interval ID to clean up on component unmount
+        return intervalId;
     };
 
+    // Add cleanup in useEffect
+    useEffect(() => {
+        let intervalId;
+        if (transactionId) {
+            intervalId = startPolling(transactionId);
+        }
 
-    // In MpesaPaymentForm.jsx
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [transactionId]);
+    
     useEffect(() => {
         if (initialAmount) {
             form.setFieldsValue({ amount: initialAmount });
