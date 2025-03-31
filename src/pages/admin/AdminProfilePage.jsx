@@ -199,7 +199,7 @@ const AdminProfilePage = () => {
                                         type="primary"
                                         htmlType="submit"
                                         loading={passwordChangeLoading}
-                                        style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}
+                                        style={{ backgroundColor: '#b5e487', borderColor: 'maroon', color: 'black' }}
                                     >
                                         Change Password
                                     </Button>

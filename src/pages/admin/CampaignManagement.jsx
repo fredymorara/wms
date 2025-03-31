@@ -236,11 +236,7 @@ const CampaignManagementPage = () => {
                 </Button>
             ),
         },
-        {
-            title: 'Tracking #',
-            dataIndex: 'trackingNumber',
-            key: 'trackingNumber',
-        },
+        
         {
             title: 'Target (Ksh)',
             dataIndex: 'goalAmount',
@@ -271,7 +267,7 @@ const CampaignManagementPage = () => {
             render: (_, record) => (
                 <Space size="middle">
                     <Button size="small" onClick={() => showDetailsModal(record)}>View Details</Button>
-                    <Button size="small" type="primary" danger onClick={() => handleEndCampaign(record._id)} loading={isActionLoading}>
+                    <Button size="small" danger onClick={() => handleEndCampaign(record._id)} loading={isActionLoading}>
                         End Campaign
                     </Button>
                 </Space>
@@ -284,6 +280,7 @@ const CampaignManagementPage = () => {
             title: 'Title',
             dataIndex: 'title',
             key: 'title',
+            ellipsis: 'true',
             render: (text, record) => (
                 <Button type="link" onClick={() => showApprovalModal(record)} style={{ color: 'maroon', padding: 0 }}>
                     {text}
@@ -306,7 +303,7 @@ const CampaignManagementPage = () => {
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
-                <Button type="primary" onClick={() => showApprovalModal(record)}>
+                <Button onClick={() => showApprovalModal(record)}>
                     Review Request
                 </Button>
             ),
@@ -323,11 +320,6 @@ const CampaignManagementPage = () => {
                     {text}
                 </Button>
             ),
-        },
-        {
-            title: 'Tracking #',
-            dataIndex: 'trackingNumber',
-            key: 'trackingNumber',
         },
         {
             title: 'Target (Ksh)',
@@ -485,7 +477,7 @@ const CampaignManagementPage = () => {
                     {selectedCampaignForApproval && (
                         <div style={{ padding: 16 }}>
                             <Title level={5} style={{ color: 'maroon', textAlign: 'center' }}>Campaign Request Details</Title>
-                            <Paragraph><strong>Requester:</strong> {selectedCampaignForApproval.requesterName}</Paragraph>
+                            {/* <Paragraph><strong>Requester:</strong> {selectedCampaignForApproval.requesterName}</Paragraph> */}
                             <Paragraph><strong>Date Requested:</strong> {new Date(selectedCampaignForApproval.createdAt).toLocaleDateString()}</Paragraph>
                             <Paragraph><strong>Description:</strong> {selectedCampaignForApproval.description}</Paragraph>
 
@@ -517,7 +509,7 @@ const CampaignManagementPage = () => {
                                     </Button>
                                     <Button
                                         type="primary"
-                                        style={{ backgroundColor: 'maroon', borderColor: 'maroon' }}
+                                        style={{ backgroundColor: '#b5e487', borderColor: 'maroon',color: 'black' }}
                                         onClick={() => {
                                             console.log("Approve Button Clicked - selectedCampaignForApproval:", selectedCampaignForApproval);
                                             console.log("Approve Button Clicked - selectedCampaignForApproval._id:", selectedCampaignForApproval?._id);
