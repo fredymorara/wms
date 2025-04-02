@@ -129,7 +129,7 @@ const ReportsPage = () => {
                                                 onClick={handleGenerateReport}
                                                 loading={loading}
                                                 icon={<DownloadOutlined />}
-                                                style={{ backgroundColor: 'maroon', borderColor: 'maroon', color: 'white' }}
+                                                style={{ backgroundColor: '#b5e487', borderColor: 'maroon', color: 'black' }}
                                             >
                                                 Generate Report
                                             </Button>
