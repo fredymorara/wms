@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Alert, Typography, Spin, Card, Progress, Statistic, Row, Col } from 'antd';
 import { PhoneOutlined, PayCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { initiateMpesaPayment, API_URL } from '../services/api'; // Assuming you'll create this API function
+import { initiateMpesaPayment, API_URL } from '../services/api'; 
 
 const { Title, Text, Paragraph } = Typography;
 
 const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialAmount }) => {
-    console.log("Campaign Data:", campaign); // Debugging: Log the campaign object
+    console.log("Campaign Data:", campaign); 
 
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
