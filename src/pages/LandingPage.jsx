@@ -82,7 +82,7 @@ const LandingPage = () => {
             <Content style={{ padding: '20px' }}>
                 <div
                     style={{
-                        padding: '3rem', // Increased padding for more space
+                        padding: '3rem', 
                         borderRadius: 10,
                         display: 'flex',
                         flexDirection: 'column',
@@ -142,8 +142,8 @@ const LandingPage = () => {
 
                 <div
                     style={{
-                        margin: '4rem auto', // Increased margin
-                        padding: '3rem', // Increased padding
+                        margin: '4rem auto', 
+                        padding: '3rem', 
                         backgroundColor: 'rgba(0, 0, 0, 0.7)',
                         borderRadius: 12,
                         textAlign: 'center',
