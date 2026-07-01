@@ -1,48 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Alert, Typography, Spin, Card, Progress, Statistic, Row, Col } from 'antd';
+import { Form, Input, Button, Alert, Typography, Spin, Progress, Statistic, Row, Col } from 'antd';
 import { PhoneOutlined, PayCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { initiateMpesaPayment, API_URL } from '../services/api'; 
 
 const { Title, Text, Paragraph } = Typography;
 
 const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialAmount }) => {
-    console.log("Campaign Data:", campaign); 
-
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
-    const [paymentStatus, setPaymentStatus] = useState('initial'); // 'initial', 'pending', 'success', 'failed', 'cancelled'
+    const [paymentStatus, setPaymentStatus] = useState('initial');
     const [transactionId, setTransactionId] = useState(null);
 
     const onFinish = async (values) => {
         setLoading(true);
         setError(null);
         setSuccessMessage(null);
-        setPaymentStatus('pending'); // Set payment status to pending immediately after initiating
-        setTransactionId(null); // Reset transaction ID for new payments
+        setPaymentStatus('pending');
+        setTransactionId(null);
 
         try {
-            console.log('Initiating payment with:', {
-                phone: values.phone,
-                amount: values.amount,
-                campaignId: campaign.id
-            });
-            // Format phone number
             const phoneNumber = values.phone.startsWith('0') ? '254' + values.phone.substring(1) : values.phone;
             const amount = Number(values.amount);
 
-            // Include campaignId here!  <------ IMPORTANT CHANGE
             const paymentData = {
                 phone: phoneNumber,
                 amount: amount,
-                campaignId: campaign.id // <---- ADD campaignId: campaign._id
+                campaignId: campaign.id || campaign._id
             };
 
-            const response = await initiateMpesaPayment(paymentData); // Send the paymentData object
+            const response = await initiateMpesaPayment(paymentData);
             if (response.message === 'Payment initiated successfully') {
-                setTransactionId(response.data.checkoutRequestId); // Store transaction ID
-                startPolling(response.data.checkoutRequestId); // Start polling for payment status
+                setTransactionId(response.data.checkoutRequestId);
+                startPolling(response.data.checkoutRequestId);
                 setSuccessMessage('Payment initiation successful! Please check your phone to complete the M-Pesa payment.');
                 form.resetFields();
             } else {
@@ -54,7 +45,6 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
             }
 
         } catch (error) {
-            console.error('Full payment error:', error);
             setPaymentStatus('failed');
             setError(error.message || 'Payment initiation failed. Please check your network and try again.');
             if (onPaymentError) {
@@ -65,8 +55,8 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
         }
     };
 
-    const pollInterval = 3000; // Poll every 3 seconds
-    const timeoutDuration = 60000; // Timeout after 60 seconds (adjust as needed)
+    const pollInterval = 3000;
+    const timeoutDuration = 60000;
     const startTime = Date.now();
 
     const startPolling = (checkoutRequestId) => {
@@ -74,13 +64,12 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
             const elapsedTime = Date.now() - startTime;
             if (elapsedTime > timeoutDuration) {
                 clearInterval(intervalId);
-                setPaymentStatus('cancelled'); // Treat timeout as cancellation
+                setPaymentStatus('cancelled');
                 setError('Payment verification timed out. Please check your M-Pesa and contribution history later.');
                 return;
             }
 
             try {
-                // Add a timestamp parameter to prevent caching
                 const response = await fetch(`${API_URL}/contributions/status/${checkoutRequestId}?_t=${Date.now()}`, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -90,12 +79,10 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
                 });
 
                 if (!response.ok) {
-                    console.error('Error polling payment status:', response.status, response.statusText);
-                    return; // Don't set error here, just retry
+                    return; 
                 }
 
                 const data = await response.json();
-                console.log('Payment status poll result:', data);
 
                 if (data.status === 'completed') {
                     clearInterval(intervalId);
@@ -109,19 +96,14 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
                     setPaymentStatus('failed');
                     setError('Payment failed or was cancelled. Please try again.');
                 }
-                // 'pending' status will continue polling
             } catch (error) {
-                console.error('Error during status polling:', error);
-                // Implement exponential backoff for network errors
-                // This could be enhanced in a production version
+                // handle network errors silently
             }
         }, pollInterval);
 
-        // Save the interval ID to clean up on component unmount
         return intervalId;
     };
 
-    // Add cleanup in useEffect
     useEffect(() => {
         let intervalId;
         if (transactionId) {
@@ -140,7 +122,6 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
     }, [initialAmount, form]);
 
     const onFinishFailed = (errorInfo) => {
-        console.log('Failed:', errorInfo);
         setError('Form submission failed. Please check the fields.');
     };
 
@@ -148,32 +129,35 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
         switch (paymentStatus) {
             case 'pending':
                 return <Alert
-                    message={<>
-                        <ClockCircleOutlined style={{ marginRight: 8 }} /> Waiting for M-Pesa payment confirmation. Please check your phone and complete the payment. Do not close this window.
-                    </>}
-                    type="info"
-                    showIcon
-                    style={{ marginBottom: 16 }}
+                    message={
+                        <div className="flex items-center gap-2">
+                            <ClockCircleOutlined className="text-blue-500" />
+                            <span className="font-medium text-blue-800">Waiting for M-Pesa confirmation. Please check your phone.</span>
+                        </div>
+                    }
+                    className="bg-blue-50 border-blue-200 rounded-xl mb-6"
                 />;
             case 'success':
                 return <Alert
-                    message={<>
-                        <CheckCircleOutlined style={{ marginRight: 8 }} /> Payment Successful! Thank you for your contribution.
-                    </>}
-                    type="success"
-                    showIcon
-                    style={{ marginBottom: 16 }}
+                    message={
+                        <div className="flex items-center gap-2">
+                            <CheckCircleOutlined className="text-green-500" />
+                            <span className="font-medium text-green-800">Payment Successful! Thank you for your contribution.</span>
+                        </div>
+                    }
+                    className="bg-green-50 border-green-200 rounded-xl mb-6"
                     closable afterClose={() => setPaymentStatus('initial')}
                 />;
             case 'failed':
             case 'cancelled':
                 return <Alert
-                    message={<>
-                        <CloseCircleOutlined style={{ marginRight: 8 }} /> Payment Failed or Cancelled. Please try again.
-                    </>}
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 16 }}
+                    message={
+                        <div className="flex items-center gap-2">
+                            <CloseCircleOutlined className="text-red-500" />
+                            <span className="font-medium text-red-800">Payment Failed or Cancelled. Please try again.</span>
+                        </div>
+                    }
+                    className="bg-red-50 border-red-200 rounded-xl mb-6"
                     closable afterClose={() => setPaymentStatus('initial')}
                 />;
             default:
@@ -183,51 +167,48 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
 
 
     return (
-        <div>
-            {getPaymentStatusDisplay()} {/* Display payment status alerts */}
-            {error && paymentStatus !== 'failed' && paymentStatus !== 'cancelled' && <Alert message={`Payment Error: ${error}`} type="error" showIcon style={{ marginBottom: 16 }} />} {/* General errors, not payment specific */}
+        <div className="w-full">
+            {getPaymentStatusDisplay()} 
+            {error && paymentStatus !== 'failed' && paymentStatus !== 'cancelled' && <Alert message={`Payment Error: ${error}`} type="error" className="rounded-xl mb-6" showIcon />} 
 
-            {/* Campaign Information */}
             {campaign && (
-                <Card
-                    style={{
-                        borderRadius: 6,
-                        border: '1px solid green',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                        marginBottom: 24,
-                        padding: 16,
-                    }}
-                >
-                    <Title level={3} style={{ marginBottom: 8, textAlign: 'center' }}>
-                        {campaign.title || "No Title Available"}
-                    </Title>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-                        {campaign.category || "No Category Available"}
-                    </Text>
+                <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-6 mb-8">
+                    <div className="mb-4">
+                        <div className="text-xs font-bold tracking-wider text-green-700 uppercase mb-1">{campaign.category || "General"}</div>
+                        <h3 className="text-xl font-bold text-zinc-900">{campaign.title || "Untitled Campaign"}</h3>
+                    </div>
+                    
                     <Progress
-                        percent={Math.min(Math.round((campaign.raised / campaign.goal) * 100), 100)}
-                        status={campaign.currentAmount >= campaign.goal ? "success" : "active"}
-                        strokeColor="maroon"
-                        style={{ margin: '16px 0' }}
+                        percent={Math.min(Math.round(((campaign.raised || campaign.currentAmount) / (campaign.goal || campaign.goalAmount)) * 100), 100)}
+                        status={(campaign.raised || campaign.currentAmount) >= (campaign.goal || campaign.goalAmount) ? "success" : "active"}
+                        strokeColor="#800000"
+                        trailColor="#e4e4e7"
+                        className="mb-6"
+                        size={["100%", 8]}
                     />
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Statistic title="Target" value={campaign.goal || 0} prefix="KES" />
-                        </Col>
-                        <Col span={12}>
-                            <Statistic title="Raised" value={campaign.raised || 0} prefix="KES" />
-                        </Col>
-                    </Row>
-                    <Paragraph style={{ marginTop: 16 }}>
-                        <Text strong style={{ color: 'maroon' }}>Description:</Text> {campaign.description || "No description available"}
-                    </Paragraph>
-                    <Paragraph>
-                        <Text strong style={{ color: 'maroon' }}>Details:</Text> {campaign.details || "No details available"}
-                    </Paragraph>
-                    <Paragraph>
-                        <Text strong style={{ color: 'maroon' }}>End Date:</Text> {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "No end date available"}
-                    </Paragraph>
-                </Card>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-zinc-200">
+                        <div>
+                            <div className="text-sm font-medium text-zinc-500 mb-1">Target</div>
+                            <div className="text-lg font-bold text-zinc-800">KES {(campaign.goal || campaign.goalAmount || 0).toLocaleString()}</div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-sm font-medium text-zinc-500 mb-1">Raised</div>
+                            <div className="text-lg font-bold text-green-700">KES {(campaign.raised || campaign.currentAmount || 0).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-3 text-sm">
+                        <p className="text-zinc-600">
+                            <span className="font-semibold text-zinc-800 mr-2">Description:</span> 
+                            {campaign.description || "No description available"}
+                        </p>
+                        <p className="text-zinc-600">
+                            <span className="font-semibold text-zinc-800 mr-2">Deadline:</span> 
+                            {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "N/A"}
+                        </p>
+                    </div>
+                </div>
             )}
 
             {paymentStatus === 'initial' || paymentStatus === 'failed' || paymentStatus === 'cancelled' ? (
@@ -238,26 +219,27 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
                     onFinishFailed={onFinishFailed}
                 >
                     <Form.Item
-                        label={<Text strong>Phone Number (Safaricom)</Text>}
+                        label={<span className="font-semibold text-zinc-700">M-Pesa Phone Number</span>}
                         name="phone"
                         rules={[
                             { required: true, message: 'Please enter your phone number' },
                             {
-                                pattern: /^(07|01)\d{8}$/, // Kenyan Safaricom number format (starting 07 or 01)
+                                pattern: /^(07|01)\d{8}$/, 
                                 message: 'Please enter a valid Kenyan Safaricom phone number starting with 07 or 01 (e.g., 0712345678)',
                             },
                         ]}
                     >
                         <Input
-                            prefix={<PhoneOutlined />}
+                            prefix={<PhoneOutlined className="text-zinc-400 mr-2" />}
                             placeholder="07XXXXXXXX or 01XXXXXXXX"
-                            maxLength={10} // Limit to 10 digits for Kenyan numbers
+                            maxLength={10} 
                             disabled={loading || paymentStatus === 'pending'}
+                            className="h-14 rounded-xl border-zinc-300 text-lg shadow-sm"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        label={<Text strong>Amount (KES)</Text>}
+                        label={<span className="font-semibold text-zinc-700">Amount (KES)</span>}
                         name="amount"
                         rules={[
                             { required: true, message: 'Please enter the amount' },
@@ -273,30 +255,34 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
                     >
                         <Input
                             type="number"
-                            prefix="KES "
-                            placeholder="Amount in KES"
+                            prefix={<span className="text-zinc-400 font-medium mr-2">KES</span>}
+                            placeholder="Amount to donate"
                             min={1}
                             disabled={loading || paymentStatus === 'pending'}
+                            className="h-14 rounded-xl border-zinc-300 text-lg font-semibold shadow-sm"
                         />
                     </Form.Item>
 
-                    <Form.Item>
+                    <Form.Item className="mt-8 mb-0">
                         <Button
                             type="primary"
                             htmlType="submit"
                             loading={loading}
                             block
                             icon={<PayCircleOutlined />}
-                            style={{ backgroundColor: '#b5e487', borderColor: 'maroon', color: 'black' }}
+                            className="h-14 rounded-xl bg-[#b5e487] text-[#800000] border-none font-bold text-lg shadow-sm hover:opacity-90"
                             disabled={loading || paymentStatus === 'pending'}
                         >
-                            Donate
+                            Initiate Donation
                         </Button>
                     </Form.Item>
                 </Form>
             ) : paymentStatus === 'pending' ? (
-                <Spin tip="Waiting for M-Pesa Payment Confirmation..." style={{ display: 'block', marginTop: 24 }} />
-            ) : null} {/* Don't show form after success */}
+                <div className="flex flex-col items-center justify-center py-12">
+                    <Spin size="large" />
+                    <p className="mt-6 text-zinc-600 font-medium text-center">We've sent an M-Pesa prompt to your phone.<br/>Please enter your PIN to complete the transaction.</p>
+                </div>
+            ) : null}
 
         </div>
     );

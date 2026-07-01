@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { Layout, Button, Typography, Form, Input, Alert, Spin } from 'antd';
+import { Button, Form, Input, Alert, Spin } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import logo from '../assets/kabu-logo-Beveled-shadow.png';
 import { login } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-
-const { Header, Content, Footer } = Layout;
-const { Title } = Typography;
+import PublicLayout from '../components/PublicLayout';
 
 const LoginPage = () => {
     const { login: authLogin } = useAuth();
@@ -46,89 +43,18 @@ const LoginPage = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
-            <Header
-                style={{
-                    background: 'maroon',
-                    color: 'white',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0 20px',
-                    height: '80px',
-                }}
-            >
-                <img
-                    src={logo}
-                    alt="Kabarak University Logo"
-                    style={{ height: '60px' }}
-                />
-                <Title
-                    level={4}
-                    className="text-white mx-auto text-center flex-1"
-                >
-                    <span className="hidden sm:inline text-white text-xl md:text-2xl lg:text-3xl">Kabarak Student Welfare Management System</span>
-                    <span className="sm:hidden text-white text-lg md:text-xl">Student Welfare</span>
-                </Title>
-                <div className="ml-4">
-                    <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
-                        <Link to="/">Back to Home</Link>
-                    </Button>
-                </div>
-            </Header>
-
-            <Content
-                style={{
-                    padding: '20px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
-                <div
-                    style={{
-                        maxWidth: '400px',
-                        width: '95%',
-                        padding: '1.3rem',
-                        borderRadius: 10,
-                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        position: 'relative',
-                    }}
-                >
+        <PublicLayout>
+            <div className="flex-1 flex justify-center items-center px-6 py-12">
+                <div className="w-full max-w-md bg-white rounded-3xl border border-zinc-200 shadow-xl p-8 relative overflow-hidden">
                     {loading && (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                zIndex: 1,
-                                borderRadius: 10,
-                            }}
-                        >
+                        <div className="absolute inset-0 bg-white/80 flex justify-center items-center z-10">
                             <Spin size="large" tip="Authenticating..." />
                         </div>
                     )}
 
-                    <div>
-                        <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '0.3rem' }}>
-                            Login
-                        </Title>
-                        <img
-                            src={logo}
-                            alt="Kabarak University Logo"
-                            style={{
-                                height: '45px',
-                                margin: 'auto',
-                                marginBottom: '1.5rem',
-                            }}
-                        />
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-[#800000] mb-2">Welcome Back</h2>
+                        <p className="text-zinc-500">Log in to your account to continue</p>
                     </div>
 
                     {feedback.message && (
@@ -136,11 +62,11 @@ const LoginPage = () => {
                             message={feedback.message}
                             type={feedback.type}
                             showIcon
-                            style={{ marginBottom: '1.5rem' }}
+                            className="mb-6 rounded-xl"
                         />
                     )}
 
-                    <Form name="login_form" initialValues={{ remember: true }} onFinish={onFinish}>
+                    <Form name="login_form" initialValues={{ remember: true }} onFinish={onFinish} layout="vertical">
                         <Form.Item
                             name="email"
                             rules={[
@@ -155,32 +81,49 @@ const LoginPage = () => {
                                 },
                             ]}
                         >
-                            <Input prefix={<UserOutlined />} placeholder="Email" />
+                            <Input 
+                                size="large"
+                                prefix={<UserOutlined className="text-zinc-400 mr-2" />} 
+                                placeholder="Student Email (@kabarak.ac.ke)" 
+                                className="rounded-xl border-zinc-300 h-12"
+                            />
                         </Form.Item>
-                        <Form.Item name="password" rules={[{ required: true, message: 'Please enter your password!' }]}>
-                            <Input prefix={<LockOutlined />} type="password" placeholder="Password" />
+                        
+                        <Form.Item 
+                            name="password" 
+                            rules={[{ required: true, message: 'Please enter your password!' }]}
+                        >
+                            <Input.Password 
+                                size="large"
+                                prefix={<LockOutlined className="text-zinc-400 mr-2" />} 
+                                placeholder="Password" 
+                                className="rounded-xl border-zinc-300 h-12"
+                            />
                         </Form.Item>
-                        <Form.Item>
+
+                        <div className="flex justify-end mb-6">
+                            {/* Can add a Forgot Password link here later */}
+                        </div>
+
+                        <Form.Item className="mb-4">
                             <Button
                                 type="primary"
                                 htmlType="submit"
-                                style={{ width: '100%', backgroundColor: '#b5e487', color: "black", borderColor: 'maroon' }}
+                                size="large"
+                                className="w-full bg-[#800000] hover:bg-[#600000] border-none rounded-xl h-12 font-bold shadow-md shadow-[#800000]/20"
                                 disabled={loading}
                             >
                                 {loading ? 'Processing...' : 'Log In'}
                             </Button>
                         </Form.Item>
-                        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                            <Link to="/signup">Not a member? Sign up</Link>
+                        
+                        <div className="text-center text-zinc-500">
+                            Don't have an account? <Link to="/signup" className="text-[#800000] font-semibold hover:underline">Sign up</Link>
                         </div>
                     </Form>
                 </div>
-            </Content>
-
-            <Footer style={{ textAlign: 'center', backgroundColor: '#b5e487', padding: '24px' }}>
-                KABU Student Welfare Management System ©2025 Team Project
-            </Footer>
-        </Layout>
+            </div>
+        </PublicLayout>
     );
 };
 

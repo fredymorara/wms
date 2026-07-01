@@ -1,164 +1,63 @@
 import axios from 'axios';
 
-export const API_URL = 'https://kabu-welfare-backend.onrender.com'
+// Use environment variable or fallback to localhost
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// Register a new user
-export const register = async (userData) => {
-    try {
-        const response = await axios.post(`${API_URL}/auth/register`, userData);
-        return response.data;
-    } catch (error) {
-        throw error.response ? error.response.data : { message: 'Network error or server is down.' };
-    }
-};
+const api = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
-
-export const login = async (credentials) => {
-    try {
-        const response = await axios.post(`${API_URL}/auth/login`, credentials);
-        return response.data; // Return { user, token }
-    } catch (error) {
-        throw new Error(error.response?.data?.message || 'Login failed ... Network error or server is down. ');
-    }
-};
-
-// Fetch member profile
-export const getMemberProfile = async (token) => {
-    try {
-        const response = await axios.get(`${API_URL}/member/profile`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        throw error.response.data;
-    }
-};
-
-// Update member profile
-export const updateMemberProfile = async (fullName, token) => {
-    console.log("updateMemberProfile API function called with fullName:", fullName, "and token:", token); // <--- ADD THIS LOG (START)
-    try {
-        const response = await axios.put(
-            `${API_URL}/member/profile/update`,
-            { fullName },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            }
-        );
-        console.log("updateMemberProfile API function response:", response); // <--- ADD THIS LOG (SUCCESS)
-        return response.data;
-    } catch (error) {
-        console.error("updateMemberProfile API function error:", error); // Keep error log
-        throw error.response ? error.response.data : { message: 'Network error or profile update failed.' };
-    }
-};
-
-// Fetch active campaigns
-export const getActiveCampaigns = async (token) => {
-    try {
-        const response = await axios.get(`${API_URL}/member/campaigns`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        throw error.response.data;
-    }
-};
-
-export const getFundsOverview = async () => {
-    return axios.get(`${API_URL}/admin/dashboard-metrics`);
-};
-
-// initiateMpesaPayment with this:
-export const initiateMpesaPayment = async (paymentData) => {
+// Request interceptor to attach token
+api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
-    try {
-        const response = await fetch(`${API_URL}/member/mpesa-payment`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(paymentData),
-        });
-        if (!response.ok) {
-            const errorText = await response.text(); // Get error text from response
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error("Fetch API Error initiating M-Pesa payment:", error);
-        return { message: 'Payment initiation failed', error: error.message };
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
     }
-};
+    return config;
+}, (error) => Promise.reject(error));
 
-// ADD THIS FUNCTION for Member Password Change
-export const changeMemberPassword = async (passwordData, token) => {
-    try {
-        const response = await axios.put(
-            `${API_URL}/member/profile/change-password`,
-            passwordData, // { currentPassword, newPassword }
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            }
-        );
-        return response.data; // { message: "Password updated successfully." }
-    } catch (error) {
-        console.error("Change Member Password API error:", error.response?.data || error.message);
-        throw error.response?.data || { message: 'Network error or password change failed.' };
+// Response interceptor for uniform error handling
+api.interceptors.response.use(
+    (response) => response.data, // Return data directly for cleaner components
+    (error) => {
+        const errorMsg = error.response?.data?.message || error.response?.data || error.message || 'An unexpected error occurred';
+        console.error('API Error:', errorMsg);
+        return Promise.reject(new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)));
     }
-};
+);
 
-// ADD THIS FUNCTION for Admin Password Change
-export const changeAdminPassword = async (passwordData, token) => {
-    try {
-        const response = await axios.post(
-            `${API_URL}/admin/change-password`,
-            passwordData, // { currentPassword, newPassword }
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            }
-        );
-        return response.data; // { message: "Admin password changed successfully." }
-    } catch (error) {
-        console.error("Change Admin Password API error:", error.response?.data || error.message);
-        throw error.response?.data || { message: 'Network error or password change failed.' };
-    }
-};
+export default api;
 
-// --- NEW Function: Initiate Campaign Disbursement (Admin) ---
-export const initiateCampaignDisbursement = async (campaignId, disbursementData) => {
-    // disbursementData should contain { recipientPhone, amount, recipientName?, remarks? }
-    try {
-        // Retrieve token from localStorage or context if not using Axios interceptor
-        const token = localStorage.getItem('token');
-        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+// --- API Functions ---
 
-        // Make sure API_URL is correctly defined/imported
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'; // Or your actual API base URL
+// Auth
+export const register = (userData) => api.post('/auth/register', userData);
+export const login = (credentials) => api.post('/auth/login', credentials);
+export const validateToken = () => api.get('/auth/validate-token');
 
-        const response = await axios.post(
-            `${API_URL}/admin/campaigns/${campaignId}/initiate-disbursement`,
-            disbursementData,
-            config // Pass config with headers
-        );
-        return response.data; // Contains { message, conversationId, campaignStatus, disbursementStatus }
-    } catch (error) {
-        console.error('Error initiating campaign disbursement:', error.response?.data || error.message);
-        // Rethrow a more specific error message if available
-        throw new Error(error.response?.data?.message || error.message || 'Failed to initiate disbursement');
-    }
-};
+// Member Profile
+export const getMemberProfile = () => api.get('/member/profile');
+export const updateMemberProfile = (fullName) => api.put('/member/profile/update', { fullName });
+export const changeMemberPassword = (passwordData) => api.put('/member/profile/change-password', passwordData);
+
+// Member Campaigns & Funds
+export const getActiveCampaigns = () => api.get('/member/campaigns');
+export const initiateMpesaPayment = (paymentData) => api.post('/member/mpesa-payment', paymentData);
+
+// Admin Dashboard & Reports
+export const getFundsOverview = () => api.get('/admin/dashboard-metrics');
+export const changeAdminPassword = (passwordData) => api.post('/admin/change-password', passwordData);
+
+// Admin Campaigns
+export const getAdminCampaigns = () => api.get('/admin/campaigns');
+export const endCampaign = (campaignId) => api.post(`/admin/campaigns/${campaignId}/end`);
+export const approveCampaign = (campaignId) => api.post(`/admin/campaigns/${campaignId}/approve`);
+export const rejectCampaign = (campaignId, rejectionReason) => api.post(`/admin/campaigns/${campaignId}/reject`, { rejectionReason });
+export const initiateCampaignDisbursement = (campaignId, disbursementData) => api.post(`/admin/campaigns/${campaignId}/initiate-disbursement`, disbursementData);
+
+// Admin Funds
+export const getCampaignContributors = (campaignId) => api.get(`/admin/campaign-contributors/${campaignId}`);
+export const getCampaignContributionHistory = (campaignId) => api.get(`/admin/campaign-contribution-history/${campaignId}`);

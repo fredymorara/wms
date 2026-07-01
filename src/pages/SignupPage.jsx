@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import { Layout, Button, Typography, Form, Input, Alert, Spin } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { Button, Form, Input, Alert, Spin } from 'antd';
+import { Link } from 'react-router-dom';
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
-import logo from '../assets/kabu-logo-Beveled-shadow.png';
 import { register } from '../services/api';
-
-const { Header, Content, Footer } = Layout;
-const { Title } = Typography;
+import PublicLayout from '../components/PublicLayout';
 
 const SignupPage = () => {
-    const navigate = useNavigate();
     const [form] = Form.useForm();
     const [feedback, setFeedback] = useState({ type: '', message: '' });
     const [loading, setLoading] = useState(false);
@@ -58,87 +54,18 @@ const SignupPage = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
-            <Header
-                style={{
-                    background: 'maroon',
-                    color: 'white',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0 20px',
-                    height: '80px',
-                }}
-            >
-                <img
-                    src={logo}
-                    alt="Kabarak University Logo"
-                    style={{ height: '60px' }}
-                />
-                <Title
-                    level={4}
-                    className="text-white mx-auto text-center flex-1"
-                >
-                    <span className="hidden sm:inline text-xl text-white md:text-2xl lg:text-3xl">
-                        Kabarak Student Welfare Management System
-                    </span>
-                    <span className="sm:hidden text-lg text-white md:text-xl">Student Welfare</span>
-                </Title>
-                <div className="ml-4">
-                    <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
-                        <Link to="/">Back to Home</Link>
-                    </Button>
-                </div>
-            </Header>
-
-            <Content
-                style={{
-                    padding: '20px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
-                <div
-                    style={{
-                        maxWidth: '400px',
-                        width: '95%',
-                        padding: '1.3rem',
-                        borderRadius: 10,
-                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        position: 'relative',
-                    }}
-                >
+        <PublicLayout>
+            <div className="flex-1 flex justify-center items-center px-6 py-12">
+                <div className="w-full max-w-lg bg-white rounded-3xl border border-zinc-200 shadow-xl p-8 md:p-10 relative overflow-hidden">
                     {loading && (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                zIndex: 1,
-                                borderRadius: 10,
-                            }}
-                        >
+                        <div className="absolute inset-0 bg-white/80 flex justify-center items-center z-10">
                             <Spin size="large" tip="Registering..." />
                         </div>
                     )}
 
-                    <div>
-                        <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '0.3rem' }}>
-                            Sign Up
-                        </Title>
-                        <img
-                            src={logo}
-                            alt="Kabarak University Logo"
-                            style={{ height: '45px', margin: 'auto', marginBottom: '1.5rem' }}
-                        />
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-[#800000] mb-2">Create an Account</h2>
+                        <p className="text-zinc-500">Join the KABU student welfare community</p>
                     </div>
 
                     {feedback.message && (
@@ -146,23 +73,37 @@ const SignupPage = () => {
                             message={feedback.message}
                             type={feedback.type}
                             showIcon
-                            style={{ marginBottom: '1.5rem' }}
+                            className="mb-6 rounded-xl"
                         />
                     )}
 
-                    <Form form={form} name="signup_form" initialValues={{ remember: true }} onFinish={onFinish}>
-                        <Form.Item
-                            name="fullName"
-                            rules={[{ required: true, message: 'Please enter your full name!' }]}
-                        >
-                            <Input prefix={<UserOutlined />} placeholder="Full Name" />
-                        </Form.Item>
-                        <Form.Item
-                            name="admissionNumber"
-                            rules={[{ required: true, message: 'Please enter your admission number!' }]}
-                        >
-                            <Input prefix={<IdcardOutlined />} placeholder="Admission Number" />
-                        </Form.Item>
+                    <Form form={form} name="signup_form" initialValues={{ remember: true }} onFinish={onFinish} layout="vertical">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                            <Form.Item
+                                name="fullName"
+                                rules={[{ required: true, message: 'Please enter your full name!' }]}
+                            >
+                                <Input 
+                                    size="large"
+                                    prefix={<UserOutlined className="text-zinc-400 mr-2" />} 
+                                    placeholder="Full Name" 
+                                    className="rounded-xl border-zinc-300 h-12"
+                                />
+                            </Form.Item>
+                            
+                            <Form.Item
+                                name="admissionNumber"
+                                rules={[{ required: true, message: 'Please enter your admission number!' }]}
+                            >
+                                <Input 
+                                    size="large"
+                                    prefix={<IdcardOutlined className="text-zinc-400 mr-2" />} 
+                                    placeholder="Admission Number" 
+                                    className="rounded-xl border-zinc-300 h-12"
+                                />
+                            </Form.Item>
+                        </div>
+
                         <Form.Item
                             name="email"
                             rules={[
@@ -178,55 +119,73 @@ const SignupPage = () => {
                                 },
                             ]}
                         >
-                            <Input prefix={<MailOutlined />} placeholder="Email" />
+                            <Input 
+                                size="large"
+                                prefix={<MailOutlined className="text-zinc-400 mr-2" />} 
+                                placeholder="Student Email (@kabarak.ac.ke)" 
+                                className="rounded-xl border-zinc-300 h-12"
+                            />
                         </Form.Item>
-                        <Form.Item
-                            name="password"
-                            rules={[
-                                { required: true, message: 'Please enter your password!' },
-                                { min: 6, message: 'Password must be at least 6 characters long.' },
-                            ]}
-                        >
-                            <Input prefix={<LockOutlined />} type="password" placeholder="Password" />
-                        </Form.Item>
-                        <Form.Item
-                            name="confirmPassword"
-                            dependencies={['password']}
-                            rules={[
-                                { required: true, message: 'Please confirm your password!' },
-                                ({ getFieldValue }) => ({
-                                    validator(_, value) {
-                                        if (!value || getFieldValue('password') === value) {
-                                            return Promise.resolve();
-                                        }
-                                        return Promise.reject(new Error('The two passwords do not match!'));
-                                    },
-                                }),
-                            ]}
-                        >
-                            <Input prefix={<LockOutlined />} type="password" placeholder="Confirm Password" />
-                        </Form.Item>
-                        <Form.Item>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                            <Form.Item
+                                name="password"
+                                rules={[
+                                    { required: true, message: 'Please enter your password!' },
+                                    { min: 6, message: 'Password must be at least 6 characters long.' },
+                                ]}
+                            >
+                                <Input.Password 
+                                    size="large"
+                                    prefix={<LockOutlined className="text-zinc-400 mr-2" />} 
+                                    placeholder="Password" 
+                                    className="rounded-xl border-zinc-300 h-12"
+                                />
+                            </Form.Item>
+                            
+                            <Form.Item
+                                name="confirmPassword"
+                                dependencies={['password']}
+                                rules={[
+                                    { required: true, message: 'Please confirm your password!' },
+                                    ({ getFieldValue }) => ({
+                                        validator(_, value) {
+                                            if (!value || getFieldValue('password') === value) {
+                                                return Promise.resolve();
+                                            }
+                                            return Promise.reject(new Error('The two passwords do not match!'));
+                                        },
+                                    }),
+                                ]}
+                            >
+                                <Input.Password 
+                                    size="large"
+                                    prefix={<LockOutlined className="text-zinc-400 mr-2" />} 
+                                    placeholder="Confirm Password" 
+                                    className="rounded-xl border-zinc-300 h-12"
+                                />
+                            </Form.Item>
+                        </div>
+
+                        <Form.Item className="mt-4 mb-4">
                             <Button
                                 type="primary"
                                 htmlType="submit"
-                                style={{ width: '100%', backgroundColor: '#b5e487', color: 'black', borderColor: 'maroon' }}
+                                size="large"
+                                className="w-full bg-[#800000] hover:bg-[#600000] border-none rounded-xl h-12 font-bold shadow-md shadow-[#800000]/20"
                                 disabled={loading}
                             >
                                 {loading ? 'Creating Account...' : 'Sign Up'}
                             </Button>
                         </Form.Item>
-                        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                            <Link to="/login">Already a member? Log in</Link>
+                        
+                        <div className="text-center text-zinc-500">
+                            Already have an account? <Link to="/login" className="text-[#800000] font-semibold hover:underline">Log in</Link>
                         </div>
                     </Form>
                 </div>
-            </Content>
-
-            <Footer style={{ textAlign: 'center', backgroundColor: '#b5e487', padding: '24px' }}>
-                KABU Student Welfare Management System ©2025 Team Project
-            </Footer>
-        </Layout>
+            </div>
+        </PublicLayout>
     );
 };
 

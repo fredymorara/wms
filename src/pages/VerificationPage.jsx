@@ -1,13 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Layout, Button, Typography, Alert, Spin, Form, Input } from 'antd';
-import { MailOutlined } from '@ant-design/icons';
-import logo from '../assets/kabu-logo-Beveled-shadow.png';
+import { Button, Alert, Spin, Form, Input } from 'antd';
+import { MailOutlined, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL } from '../services/api';
-
-const { Header, Content, Footer } = Layout;
-const { Title, Paragraph } = Typography;
+import PublicLayout from '../components/PublicLayout';
 
 const VerificationPage = () => {
     const { token } = useParams();
@@ -100,157 +97,103 @@ const VerificationPage = () => {
     };
 
     return (
-        <Layout
-            style={{
-                background: 'linear-gradient(to bottom, #F8E8EC 70%, #d9f7be)',
-                minHeight: '100vh',
-            }}
-        >
-            <Header
-                style={{
-                    background: 'maroon',
-                    color: 'white',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0 20px',
-                    height: '80px',
-                }}
-            >
-                <img
-                    src={logo}
-                    alt="Kabarak University Logo"
-                    style={{
-                        height: '60px',
-                    }}
-                />
-                <Title
-                    level={4}
-                    className="text-white mx-auto text-center flex-1"
-                >
-                    <span className="hidden sm:inline text-white text-xl md:text-2xl lg:text-3xl">Kabarak Student Welfare Management System</span>
-                    <span className="sm:hidden text-white text-lg">KSW System</span>
-                </Title>
-                <div className="ml-4">
-                    <Button type="primary" style={{ backgroundColor: '#b5e487', borderColor: '#b5e487', color: 'black' }}>
-                        <Link to="/">Back to Home</Link>
-                    </Button>
-                </div>
-            </Header>
-
-            <Content
-                style={{
-                    padding: '20px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
-                <div
-                    style={{
-                        maxWidth: '400px',
-                        width: '95%',
-                        padding: '1.3rem',
-                        borderRadius: 10,
-                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        textAlign: 'center'
-                    }}
-                >
-                    <div>
-                        <Title level={3} style={{ color: 'maroon', textAlign: 'center', marginBottom: '0.3rem' }}>
-                            Verify Email
-                        </Title>
-                        <img
-                            src={logo}
-                            alt="Kabarak University Logo"
-                            style={{
-                                height: '45px',
-                                margin: 'auto',
-                                marginBottom: '1.5rem',
-                            }}
-                        />
-                    </div>
+        <PublicLayout>
+            <div className="flex-1 flex justify-center items-center px-6 py-12">
+                <div className="w-full max-w-md bg-white rounded-3xl border border-zinc-200 shadow-xl p-8 md:p-10 text-center relative">
+                    <h2 className="text-3xl font-bold text-[#800000] mb-2">Verify Email</h2>
+                    <p className="text-zinc-500 mb-8">Confirming your account registration</p>
 
                     {verificationStatus === 'success' ? (
                         <div>
+                            <CheckCircleFilled className="text-5xl text-[#b5e487] mb-4" />
                             <Alert
-                                message={<Paragraph style={{ marginBottom: 0 }}><strong>Success!</strong> {message} You will be redirected to login page shortly.</Paragraph>}
+                                message={
+                                    <span>
+                                        <strong>Success!</strong> {message} You will be redirected to login page shortly.
+                                    </span>
+                                }
                                 type="success"
-                                showIcon
-                                style={{ marginBottom: '1.5rem' }}
+                                className="mb-6 rounded-xl text-left"
                             />
-                            <Button type="primary" style={{ width: '100%', backgroundColor: '#b5e487', color: "black", borderColor: 'maroon' }} disabled>
+                            <Button 
+                                size="large"
+                                className="w-full bg-[#b5e487]/50 text-zinc-600 border-none rounded-xl h-12 font-bold cursor-not-allowed"
+                                disabled
+                            >
                                 Redirecting to Login...
                             </Button>
                         </div>
                     ) : verificationStatus === 'error' ? (
                         <div>
+                            <CloseCircleFilled className="text-5xl text-[#800000] mb-4" />
                             <Alert
-                                message={<Paragraph style={{ marginBottom: 0 }}><strong>Verification Failed!</strong> {message}</Paragraph>}
+                                message={
+                                    <span>
+                                        <strong>Verification Failed!</strong> {message}
+                                    </span>
+                                }
                                 type="error"
-                                showIcon
-                                style={{ marginBottom: '1.5rem' }}
+                                className="mb-6 rounded-xl text-left"
                             />
                             {showResendOption && resendUI()}
-                            <Button style={{ width: '100%' }}>
-                                <Link to="/">Back to Home</Link>
-                            </Button>
+                            <Link to="/">
+                                <Button size="large" className="w-full rounded-xl h-12 mt-4 font-semibold text-zinc-600 hover:text-[#800000] hover:border-[#800000]">
+                                    Back to Home
+                                </Button>
+                            </Link>
                         </div>
                     ) : (
-                        <div>
+                        <div className="py-8">
                             <Spin size="large" />
-                            <Paragraph style={{ marginTop: '20px' }}>{message}</Paragraph>
-                            {/* Only show resend UI if NOT success */}
-                            {verificationStatus !== 'success' && showResendOption && resendUI()}
+                            <p className="mt-6 text-zinc-600 font-medium">{message}</p>
+                            {showResendOption && <div className="mt-8">{resendUI()}</div>}
                         </div>
                     )}
                 </div>
-            </Content>
-
-            <Footer style={{ textAlign: 'center', backgroundColor: '#b5e487', padding: '24px' }}>
-                KABU Student Welfare Management System ©2025 Team Project
-            </Footer>
-        </Layout>
+            </div>
+        </PublicLayout>
     );
 
     function resendUI() {
         return (
-            <>
+            <div className="text-left mt-6 pt-6 border-t border-zinc-100">
+                <h4 className="font-bold text-zinc-800 mb-4">Resend Verification Email</h4>
                 {resendStatus === 'success' && (
-                    <Alert
-                        message={<Paragraph style={{ marginBottom: 0 }}><strong>Resend Email Success!</strong> {resendMessage}</Paragraph>}
-                        type="success"
-                        showIcon
-                        style={{ marginBottom: '1.5rem' }}
-                    />
+                    <Alert message={resendMessage} type="success" className="mb-4 rounded-xl" />
                 )}
 
                 {resendStatus === 'error' && (
-                    <Alert
-                        message={<Paragraph style={{ marginBottom: 0 }}><strong>Resend Email Failed!</strong> {resendMessage}</Paragraph>}
-                        type="error"
-                        showIcon
-                        style={{ marginBottom: '1.5rem' }}
-                    />
+                    <Alert message={resendMessage} type="error" className="mb-4 rounded-xl" />
                 )}
 
                 {resendStatus === 'pending' ? (
-                    <Spin tip="Resending Email..." style={{ display: 'block', marginBottom: '1rem' }} />
+                    <div className="flex justify-center py-4">
+                        <Spin tip="Resending Email..." />
+                    </div>
                 ) : (
-                    <Form form={resendEmailForm} onFinish={handleResendEmail}>
+                    <Form form={resendEmailForm} onFinish={handleResendEmail} layout="vertical">
                         <Form.Item
                             name="email"
                             rules={[{ required: true, type: 'email', message: 'Please enter your email!' }]}
                         >
-                            <Input prefix={<MailOutlined className="site-form-item-icon" />} placeholder="Your registered email" />
+                            <Input 
+                                size="large"
+                                prefix={<MailOutlined className="text-zinc-400 mr-2" />} 
+                                placeholder="Your registered email" 
+                                className="rounded-xl border-zinc-300 h-12"
+                            />
                         </Form.Item>
-                        <Button type="primary" htmlType="submit" style={{ width: '100%', backgroundColor: '#b5e487', color: "black", borderColor: 'maroon', marginBottom: '1rem' }} >
+                        <Button 
+                            type="primary" 
+                            htmlType="submit" 
+                            size="large"
+                            className="w-full bg-[#800000] hover:bg-[#600000] border-none rounded-xl h-12 font-bold shadow-md shadow-[#800000]/20"
+                        >
                             Resend Verification Email
                         </Button>
                     </Form>
                 )}
-            </>
+            </div>
         );
     }
 };

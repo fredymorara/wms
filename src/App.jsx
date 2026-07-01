@@ -13,9 +13,9 @@ import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import CampaignManagementPage from './pages/admin/CampaignManagement.jsx';
 import FundManagementPage from './pages/admin/FundManagement.jsx';
 import ReportsPage from './pages/admin/ReportsPage.jsx';
-import AdminProfilePage from './pages/admin/AdminProfilePage.jsx';
+// Shared pages
+import ProfilePage from './pages/shared/ProfilePage.jsx';
 // Member pages
-import ProfileSettingsPage from './pages/member/ProfileSettingsPage.jsx';
 import CampaignsPage from './pages/member/CampaignsPage.jsx';
 import HelpPage from './pages/member/HelpPage.jsx';
 import ContributionHistoryPage from './pages/member/ContributionHistoryPage.jsx';
@@ -35,7 +35,7 @@ function App() {
         {/* Member Section */}
         <Route path="/member/dashboard" element={<MemberDashboardPage />} />
         <Route path="/member/history" element={<ContributionHistoryPage />} />
-        <Route path="/member/profile" element={<ProfileSettingsPage />} />
+        <Route path="/member/profile" element={<ProfilePage />} />
         <Route path="/member/campaigns" element={<CampaignsPage />} />
         <Route path="/member/help" element={<HelpPage />} />
       </Route>
@@ -46,7 +46,7 @@ function App() {
         <Route path="/admin/campaigns" element={<CampaignManagementPage />} />
         <Route path="/admin/funds" element={<FundManagementPage />} />
         <Route path="/admin/reports" element={<ReportsPage />} />
-        <Route path="/admin/profile" element={<AdminProfilePage />} />
+        <Route path="/admin/profile" element={<ProfilePage />} />
       </Route>
 
       <Route path="/404" element={<NotFoundPage />} />

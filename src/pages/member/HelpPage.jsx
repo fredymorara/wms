@@ -1,31 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Alert, Typography, Card, Row, Col } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, Alert, Typography } from 'antd';
+import { SendOutlined } from '@ant-design/icons';
 import MemberLayout from '../../layout/MemberLayout';
-import { API_URL } from '../../services/api'; // Import API_URL
+import { API_URL } from '../../services/api';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
 function HelpPage() {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const [isMobile, setIsMobile] = useState(false);
-
-    // Mobile detection (no changes needed)
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
 
     const onFinish = async (values) => {
         setLoading(true);
         setSuccessMessage('');
         setErrorMessage('');
         try {
-            // Updated API endpoint using API_URL and correct route
             const response = await fetch(`${API_URL}/member/inquiry`, {
                 method: 'POST',
                 headers: {
@@ -36,10 +27,10 @@ function HelpPage() {
 
             if (response.ok) {
                 setSuccessMessage('Your inquiry has been submitted successfully!');
-                form.resetFields(); // Clear the form
+                form.resetFields();
             } else {
-                const errorData = await response.json(); // Get error data from response
-                setErrorMessage(errorData.message || 'Failed to submit inquiry. Please try again.'); // Use error message from backend if available
+                const errorData = await response.json();
+                setErrorMessage(errorData.message || 'Failed to submit inquiry. Please try again.');
             }
         } catch (error) {
             setErrorMessage('An error occurred while submitting your inquiry.');
@@ -48,110 +39,82 @@ function HelpPage() {
         }
     };
 
-    const onFinishFailed = (errorInfo) => {
-        console.log('Failed:', errorInfo);
-        setErrorMessage('Please fill in all required fields correctly.');
-    };
-
-    // Section styling (no changes needed)
-    const sectionStyle = {
-        padding: isMobile ? '24px 16px' : '32px 24px',
-        marginBottom: 24,
-        borderBottom: '2px solid #f0f0f0',
-    };
-
     return (
         <MemberLayout>
-            <div style={{
-                width: '100%',
-                maxWidth: 1600,
-                margin: '0 auto',
-                backgroundColor: '#fff',
-                minHeight: '100vh',
-            }}>
-                {/* Help Header (no changes needed) */}
-                <div style={{ ...sectionStyle, textAlign: 'center' }}>
-                    <Title level={1} style={{
-                        color: 'maroon',
-                        fontSize: isMobile ? '1.75rem' : '2.5rem',
-                        marginBottom: 0,
-                    }}>
-                        Need Help?
-                    </Title>
-                    <Paragraph style={{ marginBottom: '20px', textAlign: 'center' }}>
-                        Please submit your inquiry below, and we will get back to you as soon as possible.
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12">
+                <div className="text-center space-y-2 mb-12">
+                    <Title level={2} className="!text-[#800000] !mb-0">Need Help?</Title>
+                    <Paragraph className="text-zinc-500 max-w-2xl mx-auto">
+                        We're here to support you. Submit your inquiry below, and our team will get back to you as soon as possible.
                     </Paragraph>
                 </div>
 
-                {/* Inquiry Form (no changes needed) */}
-                <div style={sectionStyle}>
-                    <Row justify="center">
-                        <Col xs={24} md={16} lg={12}>
-                            <Card>
-                                <Form
-                                    form={form}
-                                    layout="vertical"
-                                    onFinish={onFinish}
-                                    onFinishFailed={onFinishFailed}
-                                    autoComplete="off"
+                <div className="flex justify-center">
+                    <div className="w-full max-w-2xl bg-white border border-zinc-200 rounded-3xl p-8 md:p-12 shadow-md">
+                        {successMessage && <Alert message={successMessage} type="success" showIcon className="mb-8 rounded-xl" />}
+                        {errorMessage && <Alert message={errorMessage} type="error" showIcon className="mb-8 rounded-xl" />}
+
+                        <Form
+                            form={form}
+                            layout="vertical"
+                            onFinish={onFinish}
+                            autoComplete="off"
+                        >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                                <Form.Item
+                                    label={<span className="text-zinc-700 font-semibold">Your Name</span>}
+                                    name="name"
+                                    rules={[{ required: true, message: 'Please enter your name!' }]}
                                 >
-                                    <Form.Item
-                                        label={<Text strong>Your Name</Text>}
-                                        name="name"
-                                        rules={[{ required: true, message: 'Please enter your name!' }]}
-                                    >
-                                        <Input />
-                                    </Form.Item>
+                                    <Input size="large" className="rounded-xl border-zinc-300 h-12" placeholder="Jane Doe" />
+                                </Form.Item>
 
-                                    <Form.Item
-                                        label={<Text strong>Your Email</Text>}
-                                        name="email"
-                                        rules={[
-                                            { required: true, message: 'Please enter your email!' },
-                                            { type: 'email', message: 'Please enter a valid email!' },
-                                        ]}
-                                    >
-                                        <Input />
-                                    </Form.Item>
+                                <Form.Item
+                                    label={<span className="text-zinc-700 font-semibold">Your Email</span>}
+                                    name="email"
+                                    rules={[
+                                        { required: true, message: 'Please enter your email!' },
+                                        { type: 'email', message: 'Please enter a valid email!' },
+                                    ]}
+                                >
+                                    <Input size="large" className="rounded-xl border-zinc-300 h-12" placeholder="student@kabarak.ac.ke" />
+                                </Form.Item>
+                            </div>
 
-                                    <Form.Item
-                                        label={<Text strong>Subject</Text>}
-                                        name="subject"
-                                        rules={[{ required: true, message: 'Please enter the subject!' }]}
-                                    >
-                                        <Input />
-                                    </Form.Item>
+                            <Form.Item
+                                label={<span className="text-zinc-700 font-semibold">Subject</span>}
+                                name="subject"
+                                rules={[{ required: true, message: 'Please enter the subject!' }]}
+                            >
+                                <Input size="large" className="rounded-xl border-zinc-300 h-12" placeholder="What is this regarding?" />
+                            </Form.Item>
 
-                                    <Form.Item
-                                        label={<Text strong>Message</Text>}
-                                        name="message"
-                                        rules={[{ required: true, message: 'Please enter your message!' }]}
-                                    >
-                                        <Input.TextArea rows={4} />
-                                    </Form.Item>
+                            <Form.Item
+                                label={<span className="text-zinc-700 font-semibold">Message</span>}
+                                name="message"
+                                rules={[{ required: true, message: 'Please enter your message!' }]}
+                            >
+                                <Input.TextArea 
+                                    rows={6} 
+                                    className="rounded-xl border-zinc-300 p-4" 
+                                    placeholder="Provide detailed information about your inquiry..."
+                                />
+                            </Form.Item>
 
-                                    {successMessage && <Alert message={successMessage} type="success" showIcon style={{ marginBottom: '15px' }} />}
-                                    {errorMessage && <Alert message={errorMessage} type="error" showIcon style={{ marginBottom: '15px' }} />}
-
-                                    <Form.Item>
-                                        <Button
-                                            type="primary"
-                                            htmlType="submit"
-                                            loading={loading}
-                                            style={{
-                                                background: '#b5e487',
-                                                borderColor: 'maroon',
-                                                color: 'black',
-                                                width: "100%"
-                                            }}
-                                        >
-                                            Submit Inquiry
-                                        </Button>
-                                    </Form.Item>
-                                </Form>
-                            </Card>
-                        </Col>
-                    </Row>
+                            <Form.Item className="mb-0 mt-8">
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    loading={loading}
+                                    size="large"
+                                    icon={!loading && <SendOutlined />}
+                                    className="w-full bg-[#800000] hover:bg-[#600000] border-none rounded-xl h-14 font-bold shadow-md shadow-[#800000]/20 text-lg"
+                                >
+                                    Submit Inquiry
+                                </Button>
+                            </Form.Item>
+                        </Form>
+                    </div>
                 </div>
             </div>
         </MemberLayout>

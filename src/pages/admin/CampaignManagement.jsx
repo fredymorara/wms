@@ -1,82 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '../../layout/AdminLayout';
-import {
-    Typography,
-    Input,
-    Table,
-    Tabs,
-    Button,
-    Modal,
-    Form,
-    Alert,
-    Spin,
-    Tag,
-    Space,
-    Progress,
-    message,
-} from 'antd';
-import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
-import { API_URL } from '../../services/api';
-import { useLocation, useNavigate } from 'react-router-dom';
-import CreateCampaignModal from '../../pages/admin/CreateCampaignModal'; // Import CreateCampaignModal
+import { Typography, Input, Table, Button, Alert, Spin, Space, Progress, Statistic, Row, Col, Empty } from 'antd';
+import { PlusOutlined, SearchOutlined, SafetyOutlined, AlertOutlined, AimOutlined, DollarCircleOutlined } from '@ant-design/icons';
+import CreateCampaignModal from '../../pages/admin/CreateCampaignModal';
+import CampaignDetailsModal from './components/CampaignDetailsModal';
+import ApprovalModal from './components/ApprovalModal';
+import { useCampaigns } from '../../hooks/useCampaigns';
 
 const { Title, Paragraph, Text } = Typography;
-const { TabPane } = Tabs;
 
 const CampaignManagementPage = () => {
-    // State Management
-    const [campaigns, setCampaigns] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { campaigns, loading, error, actionLoading, fetchCampaigns, endCampaign, approveCampaign, rejectCampaign } = useCampaigns();
+    
     const [searchText, setSearchText] = useState('');
-    const [filteredCampaigns, setFilteredCampaigns] = useState([]);
     const [isMobile, setIsMobile] = useState(false);
-    const [activeTabKey, setActiveTabKey] = useState('active');
-    const [form] = Form.useForm();
-    const [rejectionReason, setRejectionReason] = useState('');
-    const [isActionLoading, setIsActionLoading] = useState(false);
+
     const [selectedCampaignForDetails, setSelectedCampaignForDetails] = useState(null);
     const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
+    
     const [selectedCampaignForApproval, setSelectedCampaignForApproval] = useState(null);
     const [isApprovalModalVisible, setIsApprovalModalVisible] = useState(false);
-    const [isCreateCampaignModalVisible, setIsCreateCampaignModalVisible] = useState(false); // State for Create Campaign Modal
+    
+    const [isCreateCampaignModalVisible, setIsCreateCampaignModalVisible] = useState(false);
 
-    // Router Hooks
-    const location = useLocation();
-    const navigate = useNavigate();
-
-    // Fetch data on component mount and when URL search params change
     useEffect(() => {
-        fetchData(); // Fetch campaigns on component mount
+        fetchCampaigns();
+    }, [fetchCampaigns]);
 
-        // Check for 'tab' parameter in URL
-        const params = new URLSearchParams(location.search);
-        const tabParam = params.get('tab');
-        if (tabParam === 'pending') {
-            setActiveTabKey('pending'); // Set active tab to 'pending' if parameter is present
-        } else {
-            setActiveTabKey('active'); // Default to 'active' tab if no parameter or different parameter
-        }
-    }, [location.search]);
-
-    // Data Fetching
-    const fetchData = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(`${API_URL}/admin/campaigns`, { headers: getAuthHeaders() });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            setCampaigns(data);
-            setFilteredCampaigns(data);
-        } catch (e) {
-            setError(e.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Responsive Design
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
@@ -84,56 +34,44 @@ const CampaignManagementPage = () => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Campaign Filtering
-    useEffect(() => {
-        let filteredData = campaigns;
+    // Filter campaigns based on search text globally
+    const filteredCampaigns = useMemo(() => {
+        if (!searchText) return campaigns;
+        return campaigns.filter(c =>
+            c.title.toLowerCase().includes(searchText.toLowerCase()) ||
+            (c.trackingNumber && c.trackingNumber.toLowerCase().includes(searchText.toLowerCase())) ||
+            c.description.toLowerCase().includes(searchText.toLowerCase())
+        );
+    }, [campaigns, searchText]);
 
-        if (activeTabKey === 'active') {
-            filteredData = campaigns.filter(c => c.status === 'active');
-        } else if (activeTabKey === 'pending') {
-            filteredData = campaigns.filter(c => c.status === 'pending_approval');
-        } else if (activeTabKey === 'records') {
-            filteredData = campaigns.filter(c => c.status !== 'pending_approval' && c.status !== 'active');
-        }
+    // Categorize campaigns
+    const pendingCampaigns = useMemo(() => filteredCampaigns.filter(c => c.status === 'pending_approval'), [filteredCampaigns]);
+    const activeCampaigns = useMemo(() => filteredCampaigns.filter(c => c.status === 'active'), [filteredCampaigns]);
+    const campaignRecords = useMemo(() => filteredCampaigns.filter(c => c.status !== 'pending_approval' && c.status !== 'active'), [filteredCampaigns]);
 
-        if (searchText) {
-            filteredData = filteredData.filter(c =>
-                c.title.toLowerCase().includes(searchText.toLowerCase()) ||
-                c.trackingNumber.toLowerCase().includes(searchText.toLowerCase()) ||
-                c.description.toLowerCase().includes(searchText.toLowerCase())
-            );
-        }
+    // Calculate metrics
+    const metrics = useMemo(() => {
+        let activeCount = 0;
+        let pendingCount = 0;
+        let totalGoal = 0;
+        let totalRaised = 0;
 
-        setFilteredCampaigns(filteredData);
-    }, [campaigns, searchText, activeTabKey]);
+        campaigns.forEach(c => {
+            if (c.status === 'active') {
+                activeCount++;
+                totalGoal += c.goalAmount || 0;
+                totalRaised += c.currentAmount || 0;
+            } else if (c.status === 'pending_approval') {
+                pendingCount++;
+            }
+        });
 
-    // Auth Headers
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    };
+        return { activeCount, pendingCount, totalGoal, totalRaised };
+    }, [campaigns]);
 
-    // Search Handlers
-    const handleSearch = (value) => {
-        setSearchText(value); // Update the search text state
-    };
-
-    const clearSearch = () => {
-        setSearchText(''); // Clear the search text
-    };
-
-    // Modal Handlers
     const showDetailsModal = (record) => {
         setSelectedCampaignForDetails(record);
         setIsDetailsModalVisible(true);
-    };
-
-    const handleDetailsModalCancel = () => {
-        setIsDetailsModalVisible(false);
-        setSelectedCampaignForDetails(null);
     };
 
     const showApprovalModal = (record) => {
@@ -141,395 +79,317 @@ const CampaignManagementPage = () => {
         setIsApprovalModalVisible(true);
     };
 
-    const handleApprovalModalCancel = () => {
+    const handleApprove = async (id) => {
+        await approveCampaign(id);
         setIsApprovalModalVisible(false);
-        setSelectedCampaignForApproval(null);
-        setRejectionReason('');
     };
 
-    // Campaign Actions
-    const handleEndCampaign = async (campaignId) => {
-        setIsActionLoading(true);
-        try {
-            const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/end`, { method: 'POST', headers: getAuthHeaders() });
-            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to end campaign'); }
-            message.success(`Campaign ${campaignId} ended successfully`);
-            await fetchData(); // Refresh data
-        } catch (error) {
-            setError(`Error ending campaign: ${error.message}`);
-            message.error(`Error ending campaign: ${error.message}`);
-        } finally {
-            setIsActionLoading(false);
-        }
+    const handleReject = async (id, reason) => {
+        await rejectCampaign(id, reason);
+        setIsApprovalModalVisible(false);
     };
 
-    const handleApproveCampaign = async (campaignId) => {
-        setIsActionLoading(true);
-        try {
-            const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/approve`, { method: 'POST', headers: getAuthHeaders() });
-            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to approve campaign'); }
-
-            message.success(`Campaign ${campaignId} approved successfully`);
-            setIsApprovalModalVisible(false);
-            await fetchData();
-
-        } catch (error) {
-            setError(`Error approving campaign: ${error.message}`);
-            message.error(`Error approving campaign: ${error.message}`);
-        } finally {
-            setIsActionLoading(false);
-        }
-    };
-
-    const handleRejectCampaign = async (campaignId) => {
-        setIsActionLoading(true);
-        try {
-            const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/reject`, {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify({ rejectionReason: rejectionReason }), // Send rejection reason in body
-            });
-            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to reject campaign'); }
-
-            message.success(`Campaign ${campaignId} rejected successfully`);
-            setIsApprovalModalVisible(false);
-            await fetchData();
-        } catch (error) {
-            setError(`Error rejecting campaign: ${error.message}`);
-            message.error(`Error rejecting campaign: ${error.message}`);
-        } finally {
-            setIsApprovalModalVisible(false);
-            setIsActionLoading(false);
-            setRejectionReason('');
-        }
-    };
-
-    const handleDisburseFunds = async (campaignId) => {
-        setIsActionLoading(true);
-        try {
-            const response = await fetch(`${API_URL}/admin/campaigns/${campaignId}/disburse`, {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify({ /* disbursement details if needed */ }),
-            });
-            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || 'Failed to disburse funds'); }
-
-            message.success(`Funds disbursement initiated for campaign ${campaignId}`);
-            await fetchData();
-        } catch (error) {
-            setError(`Error disbursing funds: ${error.message}`);
-            message.error(`Error disbursing funds: ${error.message}`);
-        } finally {
-            setIsActionLoading(false);
-        }
-    };
-
-    // Table Columns
     const activeCampaignsColumns = [
-        {
-            title: 'Title',
-            dataIndex: 'title',
-            key: 'title',
+        { 
+            title: 'Campaign Details', 
+            dataIndex: 'title', 
+            key: 'title', 
             render: (text, record) => (
-                <Button type="link" onClick={() => showDetailsModal(record)} style={{ color: 'maroon', padding: 0 }}>
-                    {text}
-                </Button>
-            ),
+                <div>
+                    <button onClick={() => showDetailsModal(record)} className="text-[#800000] font-bold hover:underline bg-transparent border-none p-0 cursor-pointer text-left text-base">
+                        {text}
+                    </button>
+                    <div className="text-zinc-500 text-xs mt-1.5 bg-zinc-100 w-max px-2.5 py-0.5 rounded-full font-medium">
+                        {record.category || 'General'}
+                    </div>
+                </div>
+            )
         },
-        
-        {
-            title: 'Target (Ksh)',
-            dataIndex: 'goalAmount',
-            key: 'targetAmount',
-            render: (text) => (text || 0).toLocaleString(),
-        },
-        {
-            title: 'Raised (Ksh)',
-            dataIndex: 'currentAmount',
-            key: 'currentAmount',
-            render: (text) => (text || 0).toLocaleString(),
-        },
-        {
-            title: 'End Date',
-            dataIndex: 'endDate',
-            key: 'endDate',
-            render: (date) => new Date(date).toLocaleDateString(),
+        { 
+            title: 'Funding Goal', 
+            key: 'funding', 
+            render: (_, record) => (
+                <div className="flex flex-col">
+                    <span className="font-bold text-green-700 text-base">KES {(record.currentAmount || 0).toLocaleString()}</span>
+                    <span className="text-xs text-zinc-400 font-medium mt-0.5">of KES {(record.goalAmount || 0).toLocaleString()}</span>
+                </div>
+            ) 
         },
         {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            render: () => <Tag color="green">Active</Tag>,
+            title: 'Progress',
+            key: 'progress',
+            width: 180,
+            render: (_, record) => {
+                const percentage = record.goalAmount && record.goalAmount > 0 ? Math.min(Math.round((record.currentAmount / record.goalAmount) * 100), 100) : 0;
+                return <Progress percent={percentage} size="small" strokeColor="#800000" trailColor="#f4f4f5" format={(percent) => <span className="text-xs font-bold text-zinc-600">{percent}%</span>} />;
+            }
         },
-        {
-            title: 'Actions',
-            key: 'actions',
+        { 
+            title: 'End Date', 
+            dataIndex: 'endDate', 
+            key: 'endDate', 
+            render: (date) => <span className="text-zinc-600 font-medium">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span> 
+        },
+        { 
+            title: 'Actions', 
+            key: 'actions', 
             render: (_, record) => (
                 <Space size="middle">
-                    <Button size="small" onClick={() => showDetailsModal(record)}>View Details</Button>
-                    <Button size="small" danger onClick={() => handleEndCampaign(record._id)} loading={isActionLoading}>
-                        End Campaign
-                    </Button>
+                    <Button onClick={() => showDetailsModal(record)} className="rounded-lg border-zinc-200 text-zinc-600 hover:text-[#800000] hover:border-[#800000] font-medium shadow-sm">View Details</Button>
+                    <Button danger onClick={() => endCampaign(record._id)} loading={actionLoading} className="rounded-lg font-bold border-red-200 text-red-600 bg-red-50 hover:bg-red-100 shadow-sm">End</Button>
                 </Space>
-            ),
+            )
         },
     ];
 
     const pendingApprovalColumns = [
-        {
-            title: 'Title',
-            dataIndex: 'title',
-            key: 'title',
-            ellipsis: 'true',
+        { 
+            title: 'Campaign Details', 
+            dataIndex: 'title', 
+            key: 'title', 
             render: (text, record) => (
-                <Button type="link" onClick={() => showApprovalModal(record)} style={{ color: 'maroon', padding: 0 }}>
-                    {text}
-                </Button>
-            ),
+                <div>
+                    <button onClick={() => showApprovalModal(record)} className="text-[#800000] font-bold hover:underline bg-transparent border-none p-0 cursor-pointer text-left text-base">
+                        {text}
+                    </button>
+                    <div className="text-zinc-500 text-xs mt-1.5 bg-orange-50 text-orange-600 border border-orange-100 w-max px-2.5 py-0.5 rounded-full font-medium">
+                        {record.category || 'Welfare'}
+                    </div>
+                </div>
+            )
         },
-        {
-            title: 'Date Requested',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (date) => new Date(date).toLocaleDateString(),
+        { 
+            title: 'Date Requested', 
+            dataIndex: 'createdAt', 
+            key: 'createdAt', 
+            render: (date) => (
+                <span className="text-zinc-600 font-medium">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            ) 
         },
-        {
-            title: 'Description',
-            dataIndex: 'description',
-            key: 'description',
-            ellipsis: true,
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
+        { 
+            title: 'Actions', 
+            key: 'actions', 
             render: (_, record) => (
-                <Button onClick={() => showApprovalModal(record)}>
+                <Button size="middle" onClick={() => showApprovalModal(record)} className="rounded-xl font-bold border-[#b5e487] text-[#800000] bg-[#b5e487] hover:bg-[#a0d470] hover:text-[#600000] shadow-sm">
                     Review Request
                 </Button>
-            ),
+            ) 
         },
     ];
 
     const campaignRecordsColumns = [
-        {
-            title: 'Title',
-            dataIndex: 'title',
-            key: 'title',
+        { 
+            title: 'Campaign Details', 
+            dataIndex: 'title', 
+            key: 'title', 
             render: (text, record) => (
-                <Button type="link" onClick={() => showDetailsModal(record)} style={{ color: 'maroon', padding: 0 }}>
-                    {text}
-                </Button>
-            ),
+                <div>
+                    <button onClick={() => showDetailsModal(record)} className="text-[#800000] font-bold hover:underline bg-transparent border-none p-0 cursor-pointer text-left text-base">
+                        {text}
+                    </button>
+                    <div className="text-zinc-500 text-xs mt-1.5 bg-zinc-100 w-max px-2.5 py-0.5 rounded-full font-medium">
+                        {record.category || 'General'}
+                    </div>
+                </div>
+            )
         },
-        {
-            title: 'Target (Ksh)',
-            dataIndex: 'goalAmount',
-            key: 'targetAmount',
-            render: (text) => (text || 0).toLocaleString(),
+        { 
+            title: 'Target (KES)', 
+            dataIndex: 'goalAmount', 
+            key: 'targetAmount', 
+            render: (text) => <span className="font-medium text-zinc-500">{(text || 0).toLocaleString()}</span> 
         },
-        {
-            title: 'Raised (Ksh)',
-            dataIndex: 'currentAmount',
-            key: 'currentAmount',
-            render: (text) => (text || 0).toLocaleString(),
+        { 
+            title: 'Final Raised', 
+            dataIndex: 'currentAmount', 
+            key: 'currentAmount', 
+            render: (text) => <span className="font-bold text-zinc-800 text-base">KES {(text || 0).toLocaleString()}</span> 
         },
-        {
-            title: 'Start Date',
-            dataIndex: 'startDate',
-            key: 'startDate',
-            render: (date) => new Date(date).toLocaleDateString(),
+        { 
+            title: 'End Date', 
+            dataIndex: 'endDate', 
+            key: 'endDate', 
+            render: (date) => <span className="text-zinc-600 font-medium">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span> 
         },
-        {
-            title: 'End Date',
-            dataIndex: 'endDate',
-            key: 'endDate',
-            render: (date) => new Date(date).toLocaleDateString(),
-        },
-        {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
+        { 
+            title: 'Status', 
+            dataIndex: 'status', 
+            key: 'status', 
             render: (status) => {
-                let color = 'default';
-                if (status === 'ended') color = 'blue';
-                if (status === 'approved') color = 'green';
-                if (status === 'rejected') color = 'red';
-                return <Tag color={color}>{status.toUpperCase()}</Tag>;
-            },
+                let colorClass = 'bg-zinc-50 text-zinc-600 border-zinc-200';
+                if (status === 'ended') colorClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                if (status === 'approved') colorClass = 'bg-green-50 text-green-700 border-green-200';
+                if (status === 'rejected') colorClass = 'bg-red-50 text-red-700 border-red-200';
+                return <span className={`${colorClass} border px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide`}>{status.replace('_', ' ')}</span>;
+            }
         },
     ];
 
     return (
         <AdminLayout>
-            <div style={{ padding: '24px' }}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-12">
                 {/* Header Section */}
-                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                    <Title level={2} style={{ color: 'maroon' }}>Campaign Management</Title>
-                    <Paragraph>Manage welfare campaigns, review requests, and track records</Paragraph>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
+                    <div>
+                        <Title level={2} className="!text-[#800000] !mb-1">Campaigns Dashboard</Title>
+                        <Paragraph className="text-zinc-500 m-0">
+                            Comprehensive overview and management of all welfare campaigns.
+                        </Paragraph>
+                    </div>
+                    <Space size="middle" className="w-full md:w-auto">
+                        <Input
+                            placeholder="Search campaigns..."
+                            onChange={(e) => setSearchText(e.target.value)}
+                            value={searchText}
+                            prefix={<SearchOutlined className="text-zinc-400" />}
+                            allowClear
+                            className="w-full md:w-64 rounded-xl border-zinc-200 h-11 shadow-sm"
+                        />
+                        <Button 
+                            type="primary" 
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsCreateCampaignModalVisible(true)} 
+                            className="bg-[#800000] hover:bg-[#600000] border-none font-bold h-11 px-6 rounded-xl shadow-md shadow-[#800000]/20 w-full md:w-auto"
+                        >
+                            Create Campaign
+                        </Button>
+                    </Space>
                 </div>
 
-                {/* Loading & Error States */}
-                {loading && <Spin tip="Loading Campaigns..." style={{ display: 'block', marginBottom: 24 }} />}
-                {error && (
-                    <Alert
-                        message={`Error: ${error}`}
-                        type="error"
-                        closable
-                        onClose={() => setError(null)}
-                        style={{ marginBottom: 24 }}
-                    />
-                )}
+                {loading && <div className="flex justify-center my-12"><Spin tip="Loading Dashboard Data..." size="large" /></div>}
+                {error && <Alert message={`Error: ${error}`} type="error" closable className="mb-8 rounded-xl" />}
 
-                {/* Top Buttons and Search */}
-                <div style={{ marginBottom: 16, textAlign: 'right', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Button type="primary" onClick={() => setIsCreateCampaignModalVisible(true)} style={{ backgroundColor: '#b5e487', borderColor: 'maroon', color: 'black' }}>
-                        Create New Campaign
-                    </Button>
-                    <Input.Search
-                        placeholder="Search campaigns"
-                        onSearch={handleSearch}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        style={{ width: isMobile ? '100%' : 300 }}
-                        value={searchText}
-                        suffix={searchText && <CloseOutlined onClick={clearSearch} style={{ cursor: 'pointer' }} />}
-                    />
-                </div>
-
-                {/* Tabs Section */}
-                <Tabs activeKey={activeTabKey} onChange={setActiveTabKey} centered>
-                    {/* Active Campaigns Tab */}
-                    <TabPane tab="Active Campaigns" key="active">
-                        <Table
-                            columns={activeCampaignsColumns}
-                            dataSource={filteredCampaigns.filter(c => activeTabKey === 'active')}
-                            rowKey="_id"
-                            pagination={{ pageSize: 10 }}
-                        />
-                    </TabPane>
-
-                    {/* Pending Approval Tab */}
-                    <TabPane tab="Pending Approval" key="pending">
-                        <Table
-                            columns={pendingApprovalColumns}
-                            dataSource={filteredCampaigns.filter(c => activeTabKey === 'pending')}
-                            rowKey="_id"
-                            pagination={{ pageSize: 10 }}
-                        />
-                    </TabPane>
-
-                    {/* Campaign Records Tab */}
-                    <TabPane tab="Campaign Records" key="records">
-                        <Table
-                            columns={campaignRecordsColumns}
-                            dataSource={filteredCampaigns.filter(c => activeTabKey === 'records')}
-                            rowKey="_id"
-                            pagination={{ pageSize: 10 }}
-                        />
-                    </TabPane>
-                </Tabs>
-
-                {/* Campaign Details Modal */}
-                <Modal
-                    title={<Title level={4} style={{ color: 'maroon', textAlign: 'center' }}>{selectedCampaignForDetails?.title || 'Campaign Details'}</Title>}
-                    visible={isDetailsModalVisible}
-                    onCancel={handleDetailsModalCancel}
-                    footer={null}
-                    width={isMobile ? '95%' : '60%'}
-                >
-                    {selectedCampaignForDetails && (
-                        <div style={{ padding: 16 }}>
-                            <Title level={4} style={{ color: 'maroon' }}>Description</Title>
-                            <Paragraph>{selectedCampaignForDetails.description}</Paragraph>
-
-                            <div style={{ padding: 16, backgroundColor: '#f7f5f5', borderRadius: 8, marginTop: 16 }}>
-                                <Title level={4} style={{ color: 'maroon' }}>Campaign Details</Title>
-                                <Paragraph>{selectedCampaignForDetails.details}</Paragraph>
+                {!loading && (
+                    <div className="space-y-8">
+                        {/* Metrics Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white p-6 rounded-3xl border border-zinc-200 shadow-sm flex flex-col">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><AimOutlined className="text-xl" /></div>
+                                    <Text className="text-zinc-500 font-semibold">Active Campaigns</Text>
+                                </div>
+                                <Text className="text-3xl font-bold text-zinc-800">{metrics.activeCount}</Text>
                             </div>
+                            <div className={`bg-white p-6 rounded-3xl border shadow-sm flex flex-col ${metrics.pendingCount > 0 ? 'border-orange-200 bg-orange-50/30' : 'border-zinc-200'}`}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className={`p-2 rounded-xl ${metrics.pendingCount > 0 ? 'bg-orange-100 text-orange-600' : 'bg-zinc-100 text-zinc-500'}`}><AlertOutlined className="text-xl" /></div>
+                                    <Text className="text-zinc-500 font-semibold">Pending Approvals</Text>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Text className="text-3xl font-bold text-zinc-800">{metrics.pendingCount}</Text>
+                                    {metrics.pendingCount > 0 && <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">ACTION REQUIRED</span>}
+                                </div>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-zinc-200 shadow-sm flex flex-col">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 bg-purple-50 text-purple-600 rounded-xl"><SafetyOutlined className="text-xl" /></div>
+                                    <Text className="text-zinc-500 font-semibold">Total Target Goal</Text>
+                                </div>
+                                <Text className="text-2xl font-bold text-zinc-800">KES {metrics.totalGoal.toLocaleString()}</Text>
+                            </div>
+                            <div className="bg-white p-6 rounded-3xl border border-zinc-200 shadow-sm flex flex-col">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 bg-green-50 text-green-600 rounded-xl"><DollarCircleOutlined className="text-xl" /></div>
+                                    <Text className="text-zinc-500 font-semibold">Total Funds Raised</Text>
+                                </div>
+                                <Text className="text-2xl font-bold text-green-700">KES {metrics.totalRaised.toLocaleString()}</Text>
+                            </div>
+                        </div>
 
-                            <div style={{ padding: 16, backgroundColor: '#f7f5f5', borderRadius: 8, marginTop: 16 }}>
-                                <Paragraph>
-                                    <Text strong style={{ color: 'maroon' }}>Goal:</Text> Ksh {selectedCampaignForDetails.goalAmount?.toLocaleString() || 0}
-                                </Paragraph>
-                                <Paragraph>
-                                    <Text strong style={{ color: 'maroon' }}>Raised:</Text> Ksh {selectedCampaignForDetails.currentAmount?.toLocaleString() || 0}
-                                </Paragraph>
-                                <Paragraph>
-                                    <Text strong style={{ color: 'maroon' }}>End Date:</Text> {new Date(selectedCampaignForDetails.endDate).toLocaleDateString()}
-                                </Paragraph>
-                                <Progress
-                                    percent={(selectedCampaignForDetails.currentAmount / selectedCampaignForDetails.targetAmount) * 100}
-                                    status="active"
-                                    strokeColor="maroon"
+                        {/* Pending Approvals Section (High Priority) */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
+                                <Title level={4} className="!text-zinc-800 !mb-0 flex items-center gap-2">
+                                    Pending Approvals
+                                    <span className="bg-zinc-100 text-zinc-600 text-xs py-0.5 px-2 rounded-full">{pendingCampaigns.length}</span>
+                                </Title>
+                            </div>
+                            {pendingCampaigns.length > 0 ? (
+                                <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm">
+                                    <Table 
+                                        columns={pendingApprovalColumns} 
+                                        dataSource={pendingCampaigns} 
+                                        rowKey="_id" 
+                                        pagination={{ pageSize: 5, className: "px-6 py-4" }}
+                                        scroll={{ x: 'max-content' }}
+                                        className="[&_.ant-table-thead_th]:bg-orange-50/50 [&_.ant-table-thead_th]:text-zinc-600 [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:border-b-zinc-200 [&_.ant-table-tbody_td]:border-b-zinc-100"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="bg-white border border-dashed border-zinc-300 rounded-3xl p-8 flex flex-col items-center justify-center text-center">
+                                    <div className="w-12 h-12 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-300 mb-3">
+                                        <SafetyOutlined className="text-2xl" />
+                                    </div>
+                                    <Text className="text-zinc-500 font-medium">No pending requests to review.</Text>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Active Campaigns Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
+                                <Title level={4} className="!text-zinc-800 !mb-0 flex items-center gap-2">
+                                    Active Campaigns
+                                    <span className="bg-zinc-100 text-zinc-600 text-xs py-0.5 px-2 rounded-full">{activeCampaigns.length}</span>
+                                </Title>
+                            </div>
+                            <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm">
+                                <Table 
+                                    columns={activeCampaignsColumns} 
+                                    dataSource={activeCampaigns} 
+                                    rowKey="_id" 
+                                    pagination={{ pageSize: 5, className: "px-6 py-4" }}
+                                    scroll={{ x: 'max-content' }}
+                                    locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No active campaigns found" /> }}
+                                    className="[&_.ant-table-thead_th]:bg-zinc-50/80 [&_.ant-table-thead_th]:text-zinc-500 [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:border-b-zinc-200 [&_.ant-table-tbody_td]:border-b-zinc-100"
                                 />
                             </div>
                         </div>
-                    )}
-                </Modal>
 
-                {/* Approval Modal */}
-                <Modal
-                    title={<Title level={4} style={{ color: 'maroon', marginBottom: '0', textAlign: 'center' }}>{`Approve/Reject: ${selectedCampaignForApproval?.title || 'Campaign'}`}</Title>}
-                    visible={isApprovalModalVisible}
-                    onCancel={handleApprovalModalCancel}
-                    footer={null}
-                    width={isMobile ? '95%' : '50%'}
-                >
-                    {selectedCampaignForApproval && (
-                        <div style={{ padding: 16 }}>
-                            <Title level={5} style={{ color: 'maroon', textAlign: 'center' }}>Campaign Request Details</Title>
-                            {/* <Paragraph><strong>Requester:</strong> {selectedCampaignForApproval.requesterName}</Paragraph> */}
-                            <Paragraph><strong>Date Requested:</strong> {new Date(selectedCampaignForApproval.createdAt).toLocaleDateString()}</Paragraph>
-                            <Paragraph><strong>Description:</strong> {selectedCampaignForApproval.description}</Paragraph>
-
-                            <div style={{ padding: 16, backgroundColor: '#f7f5f5', borderRadius: 8, marginTop: 16 }}>
-                                <Title level={5} style={{ color: 'maroon', textAlign: 'center' }}>Supporting Documents</Title>
-                                <Paragraph>{selectedCampaignForApproval.details}</Paragraph>
+                        {/* Campaign Records Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
+                                <Title level={4} className="!text-zinc-800 !mb-0 flex items-center gap-2">
+                                    Campaign Records
+                                    <span className="bg-zinc-100 text-zinc-600 text-xs py-0.5 px-2 rounded-full">{campaignRecords.length}</span>
+                                </Title>
                             </div>
-
-                            <Form layout="vertical" style={{ marginTop: 24 }}>
-                                <Form.Item label="Rejection Reason (Optional)">
-                                    <Input.TextArea
-                                        rows={3}
-                                        placeholder="Enter reason for rejection"
-                                        value={rejectionReason}
-                                        onChange={(e) => setRejectionReason(e.target.value)}
-                                    />
-                                </Form.Item>
-                                <div style={{ textAlign: 'right' }}>
-                                    <Button onClick={handleApprovalModalCancel} style={{ marginRight: 8 }}>
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        danger
-                                        onClick={() => handleRejectCampaign(selectedCampaignForApproval._id)}
-                                        loading={isActionLoading}
-                                        style={{ marginRight: 8 }}
-                                    >
-                                        Reject
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        style={{ backgroundColor: '#b5e487', borderColor: 'maroon',color: 'black' }}
-                                        onClick={() => {
-                                            console.log("Approve Button Clicked - selectedCampaignForApproval:", selectedCampaignForApproval);
-                                            console.log("Approve Button Clicked - selectedCampaignForApproval._id:", selectedCampaignForApproval?._id);
-                                            handleApproveCampaign(selectedCampaignForApproval._id);
-                                        }}
-                                        loading={isActionLoading}
-                                    >
-                                        Approve
-                                    </Button>
-                                </div>
-                            </Form>
+                            <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm">
+                                <Table 
+                                    columns={campaignRecordsColumns} 
+                                    dataSource={campaignRecords} 
+                                    rowKey="_id" 
+                                    pagination={{ pageSize: 5, className: "px-6 py-4" }}
+                                    scroll={{ x: 'max-content' }}
+                                    locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No historical campaigns found" /> }}
+                                    className="[&_.ant-table-thead_th]:bg-zinc-50/80 [&_.ant-table-thead_th]:text-zinc-500 [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:border-b-zinc-200 [&_.ant-table-tbody_td]:border-b-zinc-100"
+                                />
+                            </div>
                         </div>
-                    )}
-                </Modal>
+                    </div>
+                )}
 
-                {/* Embed Create Campaign Modal */}
+                <CampaignDetailsModal 
+                    visible={isDetailsModalVisible} 
+                    campaign={selectedCampaignForDetails} 
+                    onCancel={() => setIsDetailsModalVisible(false)} 
+                    isMobile={isMobile} 
+                />
+
+                <ApprovalModal 
+                    visible={isApprovalModalVisible} 
+                    campaign={selectedCampaignForApproval} 
+                    onCancel={() => setIsApprovalModalVisible(false)} 
+                    onApprove={handleApprove} 
+                    onReject={handleReject} 
+                    loading={actionLoading} 
+                    isMobile={isMobile} 
+                />
+
                 <CreateCampaignModal
                     visible={isCreateCampaignModalVisible}
                     onCancel={() => setIsCreateCampaignModalVisible(false)}
-                    onCreated={fetchData} // Refresh campaign list after campaign creation
+                    onCreated={fetchCampaigns}
                 />
             </div>
         </AdminLayout>

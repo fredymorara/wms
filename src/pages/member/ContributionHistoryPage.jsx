@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Input, Button, Alert, Typography, Card, Space, Tag, Divider } from 'antd';
-import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
+import { Input, Button, Alert, Typography, Pagination } from 'antd';
+import { SearchOutlined, CloseOutlined, CalendarOutlined, BankOutlined, CheckCircleFilled } from '@ant-design/icons';
 import moment from 'moment';
 import MemberLayout from '../../layout/MemberLayout';
 import { API_URL } from '../../services/api';
@@ -13,7 +13,8 @@ function ContributionHistoryPage() {
     const [error, setError] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [filteredContributions, setFilteredContributions] = useState([]);
-    const [isMobile, setIsMobile] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token');
@@ -68,13 +69,6 @@ function ContributionHistoryPage() {
         fetchData();
     }, []);
 
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
     const handleSearch = (value) => {
         setSearchText(value);
         const filteredData = contributions.filter((contribution) =>
@@ -91,126 +85,98 @@ function ContributionHistoryPage() {
         setFilteredContributions(contributions);
     };
 
-    const sectionStyle = {
-        padding: isMobile ? '24px 16px' : '32px 24px',
-        marginBottom: 24,
-        borderBottom: '2px solid #f0f0f0',
-    };
-
-    const renderContributionCards = () => {
-        if (filteredContributions.length === 0) {
-            return (
-                <div style={{ padding: '24px', textAlign: 'center', background: '#f9f9f9', borderRadius: 8 }}>
-                    <Text type="secondary">
-                        {loading ? 'Loading...' : 'You have not made any completed contributions yet.'}
-                    </Text>
-                </div>
-            );
-        }
-
-        return (
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                {filteredContributions.map((contribution) => (
-                    <Card
-                        key={contribution.id}
-                        style={{
-                            width: '100%',
-                            borderRadius: 8,
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                            border: '1px solid green'
-                        }}
-                        bodyStyle={{ padding: isMobile ? '16px' : '24px' }}
-                    >
-                        <Row gutter={16} align="middle">
-                            <Col xs={24} sm={12} md={8}>
-                                <Title level={5} style={{ color: 'maroon', marginBottom: 8 }}>
-                                    {contribution.campaign}
-                                </Title>
-                                <Text type="secondary">
-                                    {moment(contribution.date).format('MMMM DD, YYYY')}
-                                </Text>
-                            </Col>
-
-                            <Col xs={24} sm={12} md={8}>
-                                <Space direction="vertical" size="small">
-                                    <div>
-                                        <Text strong>Amount: </Text>
-                                        <Text>Ksh {contribution.amount.toLocaleString()}</Text>
-                                    </div>
-                                    <div>
-                                        <Text strong>Method: </Text>
-                                        <Text>{contribution.paymentMethod}</Text>
-                                    </div>
-                                </Space>
-                            </Col>
-
-                            <Col xs={24} sm={24} md={8}>
-                                <Space direction="vertical" size="small">
-                                    {contribution.mpesaCode && (
-                                        <div>
-                                            <Text strong>M-Pesa Code: </Text>
-                                            <Tag color="green">{contribution.mpesaCode}</Tag>
-                                        </div>
-                                    )}
-                                    <div>
-                                        <Text strong>Status: </Text>
-                                        <Tag color="success">Completed</Tag>
-                                    </div>
-                                </Space>
-                            </Col>
-                        </Row>
-                    </Card>
-                ))}
-            </Space>
-        );
-    };
-
     return (
         <MemberLayout>
-            <div style={{
-                width: '100%',
-                maxWidth: 1600,
-                margin: '0 auto',
-                backgroundColor: '#fff',
-                minHeight: '100vh',
-            }}>
-                <div style={{ ...sectionStyle, textAlign: 'center' }}>
-                    <Title level={1} style={{
-                        color: 'maroon',
-                        fontSize: isMobile ? '1.75rem' : '2.5rem',
-                        marginBottom: 0,
-                    }}>
-                        Your Contribution History
-                    </Title>
-                    <Paragraph style={{ marginBottom: '20px', textAlign: 'center' }}>
-                        View your completed contributions.
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12">
+                <div className="text-center space-y-2 mb-8">
+                    <Title level={2} className="!text-[#800000] !mb-0">Contribution History</Title>
+                    <Paragraph className="text-zinc-500 max-w-2xl mx-auto">
+                        View and track all your completed contributions to active campaigns.
                     </Paragraph>
                 </div>
 
-                {loading && <Alert message="Loading..." type="info" showIcon style={{ marginBottom: 24 }} />}
-                {error && <Alert message={`Error: ${error}`} type="error" closable onClose={() => setError(null)} style={{ marginBottom: 24 }} />}
+                {loading && <div className="flex justify-center mb-8"><Alert message="Loading history..." type="info" /></div>}
+                {error && <Alert message={`Error: ${error}`} type="error" closable onClose={() => setError(null)} className="mb-8" />}
 
-                <div style={{ ...sectionStyle, textAlign: 'center' }}>
-                    <Input
-                        placeholder="Search contributions by campaign, date, amount or M-Pesa code"
-                        prefix={<SearchOutlined />}
-                        value={searchText}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        disabled={error || loading}
-                        style={{ maxWidth: 600, marginBottom: 16 }}
-                    />
-                    {searchText && (
-                        <Button
-                            icon={<CloseOutlined />}
-                            onClick={clearSearch}
-                            style={{ marginLeft: 8 }}
+                <div className="flex justify-center mb-10">
+                    <div className="flex w-full max-w-2xl gap-2">
+                        <Input
+                            size="large"
+                            placeholder="Search by campaign, date, amount or M-Pesa code..."
+                            prefix={<SearchOutlined className="text-zinc-400" />}
+                            value={searchText}
+                            onChange={(e) => handleSearch(e.target.value)}
                             disabled={error || loading}
+                            className="rounded-2xl border-zinc-200"
+                            allowClear
                         />
-                    )}
+                    </div>
                 </div>
 
-                <div style={sectionStyle}>
-                    {renderContributionCards()}
+                <div className="space-y-4">
+                    {filteredContributions.length === 0 ? (
+                        <div className="text-center py-16 bg-white border border-zinc-200 rounded-3xl">
+                            <Title level={4} className="!text-zinc-400">No contributions found</Title>
+                            <p className="text-zinc-500">
+                                {loading ? 'Loading your data...' : 'You have not made any completed contributions yet, or none match your search.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            {filteredContributions.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((contribution) => (
+                                <div key={contribution.id} className="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 hover:shadow-md transition-shadow">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                        {/* Campaign Info */}
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-bold text-[#800000] mb-2">{contribution.campaign}</h3>
+                                            <div className="flex items-center text-sm text-zinc-500 gap-4">
+                                                <span className="flex items-center gap-1.5">
+                                                    <CalendarOutlined /> {moment(contribution.date).format('MMMM DD, YYYY')}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Amount Info */}
+                                        <div className="flex-1">
+                                            <div className="flex flex-col text-sm space-y-1">
+                                                <div>
+                                                    <span className="text-zinc-500">Amount:</span>
+                                                    <span className="ml-2 font-bold text-zinc-900 text-lg">KES {contribution.amount.toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-zinc-500">
+                                                    <BankOutlined /> {contribution.paymentMethod}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Status & Code Info */}
+                                        <div className="flex-1 flex flex-col md:items-end space-y-2">
+                                            {contribution.mpesaCode && (
+                                                <div className="bg-zinc-100 text-zinc-600 px-3 py-1 rounded-md font-mono text-sm border border-zinc-200">
+                                                    {contribution.mpesaCode}
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-1.5 text-[#389e0d] font-medium bg-[#389e0d]/10 px-3 py-1 rounded-full text-sm">
+                                                <CheckCircleFilled /> Completed
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            <div className="flex justify-center mt-10">
+                                <Pagination
+                                    current={currentPage}
+                                    pageSize={pageSize}
+                                    total={filteredContributions.length}
+                                    onChange={(page, size) => { setCurrentPage(page); setPageSize(size); }}
+                                    showSizeChanger={true}
+                                    showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+                                    className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-zinc-200"
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </MemberLayout>

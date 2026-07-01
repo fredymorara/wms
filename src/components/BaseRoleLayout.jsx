@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Breadcrumb, Avatar, theme, Button, Typography } from 'antd'; // Import Button and Typography
+import { Layout, Menu, Dropdown, Avatar, theme, Button, Typography } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import { MenuOutlined, CloseOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import logo from '../assets/Kabarak_University_Extended_logo_910x256.png';
-import { API_URL } from '../services/api'; // Import API_URL
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { API_URL } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const { Header, Content, Footer } = Layout;
-const { Text } = Typography; // Destructure Text from Typography
+const { Text } = Typography;
 
 const BaseRoleLayout = ({
     children,
@@ -21,8 +21,8 @@ const BaseRoleLayout = ({
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileView, setIsMobileView] = useState(false);
     const location = useLocation();
-    const { token: { colorBgContainer, borderRadiusLG } } = theme.useToken();
-    const { logout } = useAuth(); // Get logout function from AuthContext
+    const { token: { borderRadiusLG } } = theme.useToken();
+    const { logout } = useAuth();
 
     // Responsive view handling
     useEffect(() => {
@@ -36,9 +36,8 @@ const BaseRoleLayout = ({
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const fullApiEndpoint = `${API_URL}${apiEndpointPath}
-            `
-                const token = localStorage.getItem('token')
+                const fullApiEndpoint = `${API_URL}${apiEndpointPath}`;
+                const token = localStorage.getItem('token');
                 const response = await fetch(fullApiEndpoint, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -58,34 +57,42 @@ const BaseRoleLayout = ({
     const getSelectedKeys = () => [location.pathname];
 
     const handleLogout = () => {
-        logout(); // Call the logout function from AuthContext
+        logout();
+    };
+
+    const userMenu = {
+        items: [
+            {
+                key: 'profile',
+                icon: <UserOutlined />,
+                label: <Link to={location.pathname.startsWith('/admin') ? '/admin/profile' : '/member/profile'}>Profile Settings</Link>,
+            },
+            {
+                type: 'divider',
+            },
+            {
+                key: 'logout',
+                icon: <LogoutOutlined />,
+                label: 'Log Out',
+                danger: true,
+                onClick: handleLogout,
+            },
+        ],
     };
 
     return (
-        <Layout style={{
-            background: 'linear-gradient(to bottom, white 80%, #d9f7be 100%)',
-            minHeight: '100vh',
-            display: 'flex',
-            paddingTop: '2px',
-            flexDirection: 'column',
-        }}>
+        <Layout className="min-h-screen flex flex-col bg-zinc-50">
             {/* Header Section */}
-            <Header style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: 'white',
-                padding: '0 24px',
-                height: 64,
-            }}>
+            <Header className="sticky top-0 z-50 flex items-center bg-white/80 backdrop-blur-md border-b border-zinc-200 px-6 h-16">
                 {/* Logo and KWS Title (Mobile) */}
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div className="flex items-center">
                     <img
                         src={logo}
                         alt="Kabarak University Logo"
-                        style={{ height: isMobileView ? '45px' : '60px', marginRight: isMobileView ? 8 : 40 }}
+                        className={`${isMobileView ? 'h-8 mr-2' : 'h-10 mr-10'}`}
                     />
                     {isMobileView && (
-                        <span style={{ color: 'white', fontSize: '1.25rem', fontWeight: 'bold' }}>KWS</span>
+                        <span className="text-[#800000] text-xl font-bold">KWS</span>
                     )}
                 </div>
 
@@ -95,39 +102,42 @@ const BaseRoleLayout = ({
                         theme="light"
                         mode="horizontal"
                         selectedKeys={getSelectedKeys()}
-                        items={menuItems}
+                        items={menuItems.filter(item => item.key !== '/admin/profile' && item.key !== '/member/profile')}
                         style={{
-                            background: 'white',
+                            background: 'transparent',
                             borderBottom: 'none',
                             lineHeight: '64px',
                             flex: 1,
-                            marginLeft: 24
+                            marginLeft: 24,
                         }}
                     />
                 )}
 
                 {/* User Profile and Logout Button */}
-                <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-
-                    <Button danger onClick={handleLogout} icon={<LogoutOutlined />}>
-
-                    </Button>
-                </div>
-
+                {!isMobileView && (
+                    <div className="flex items-center ml-auto">
+                        <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
+                            <div className="flex items-center cursor-pointer hover:bg-zinc-100 px-3 py-1 rounded-full transition-colors">
+                                <Avatar 
+                                    size="small" 
+                                    src={user?.profilePicture} 
+                                    icon={<UserOutlined />} 
+                                    className="bg-[#800000]"
+                                />
+                                <span className="ml-2 text-sm font-medium text-zinc-700">
+                                    {user?.fullName || 'User'}
+                                </span>
+                            </div>
+                        </Dropdown>
+                    </div>
+                )}
 
                 {/* Hamburger Menu Button (Mobile Only) */}
                 {isMobileView && (
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'maroon',
-                            fontSize: '24px',
-                            cursor: 'pointer',
-                            padding: 0,
-                            marginLeft: 16
-                        }}>
+                        className="bg-transparent border-none text-[#800000] text-2xl cursor-pointer p-0 ml-auto"
+                    >
                         {isMobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
                     </button>
                 )}
@@ -135,47 +145,33 @@ const BaseRoleLayout = ({
 
             {/* Mobile Menu */}
             {isMobileView && isMobileMenuOpen && (
-                <div style={{
-                    padding: '16px',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 1
-                }}>
+                <div className="p-4 sticky top-16 z-40 bg-white border-b border-zinc-200 shadow-sm">
                     <Menu
                         theme="light"
                         mode="inline"
                         selectedKeys={getSelectedKeys()}
                         items={menuItems}
+                        className="border-none"
                     />
+                    <div className="mt-4 pt-4 border-t border-zinc-100">
+                        <Button block danger icon={<LogoutOutlined />} onClick={handleLogout}>
+                            Log Out
+                        </Button>
+                    </div>
                 </div>
             )}
 
             {/* Content Section */}
-            <Content style={{
-                padding: '0 24px',
-                flex: 1,
-                maxWidth: 1200,
-                margin: '0 auto',
-                width: '100%'
-            }}>
-                <div style={{
-                    padding: 24,
-                    minHeight: 360,
-                    background: colorBgContainer,
-                    borderRadius: borderRadiusLG,
-                }}>
+            <Content className="px-4 md:px-8 flex-1 max-w-7xl mx-auto w-full mt-8">
+                <div className="min-h-[360px] pb-12 rounded-xl">
                     {children}
                 </div>
             </Content>
 
             {/* Footer Section */}
-            <Footer style={{
-                textAlign: 'center',
-                fontSize: '1rem',
-                backgroundColor: '#b5e487',
-                padding: '24px 16px'
-            }}>
-                KABU Student Welfare Management System ©2025 Team Project.
+            <Footer className="text-center text-sm py-6 bg-white border-t border-[#b5e487] text-zinc-600">
+                <p className="font-medium text-[#800000]">Kabarak Student Welfare Management System ©2025</p>
+                <p className="text-xs text-zinc-400 mt-1">Support. Connect. Thrive.</p>
             </Footer>
         </Layout>
     );
