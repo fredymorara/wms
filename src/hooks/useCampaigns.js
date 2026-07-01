@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { message } from 'antd';
-import * as api from '../services/api';
+import { getAdminCampaigns, endCampaign as apiEndCampaign, approveCampaign as apiApproveCampaign, rejectCampaign as apiRejectCampaign } from '../services/api';
 
 export const useCampaigns = () => {
     const [campaigns, setCampaigns] = useState([]);
@@ -12,7 +12,7 @@ export const useCampaigns = () => {
         setLoading(true);
         setError(null);
         try {
-            const result = await api.getAdminCampaigns();
+            const result = await getAdminCampaigns();
             const data = result.data || result; // handle paginated response object
             setCampaigns(data);
             return data;
@@ -28,7 +28,7 @@ export const useCampaigns = () => {
     const endCampaign = async (campaignId) => {
         setActionLoading(true);
         try {
-            await api.endCampaign(campaignId);
+            await apiEndCampaign(campaignId);
             message.success(`Campaign ${campaignId} ended successfully`);
             await fetchCampaigns(); // Refresh data
         } catch (err) {
@@ -43,7 +43,7 @@ export const useCampaigns = () => {
     const approveCampaign = async (campaignId) => {
         setActionLoading(true);
         try {
-            await api.approveCampaign(campaignId);
+            await apiApproveCampaign(campaignId);
             message.success(`Campaign ${campaignId} approved successfully`);
             await fetchCampaigns(); // Refresh data
         } catch (err) {
@@ -58,7 +58,7 @@ export const useCampaigns = () => {
     const rejectCampaign = async (campaignId, rejectionReason) => {
         setActionLoading(true);
         try {
-            await api.rejectCampaign(campaignId, rejectionReason);
+            await apiRejectCampaign(campaignId, rejectionReason);
             message.success(`Campaign ${campaignId} rejected successfully`);
             await fetchCampaigns(); // Refresh data
         } catch (err) {

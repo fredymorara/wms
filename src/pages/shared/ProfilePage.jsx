@@ -3,7 +3,7 @@ import { Form, Input, Button, Alert, Spin, Avatar, Typography, message } from 'a
 import { UserOutlined, LockOutlined, SaveOutlined } from '@ant-design/icons';
 import AdminLayout from '../../layout/AdminLayout';
 import MemberLayout from '../../layout/MemberLayout';
-import api from '../../services/api';
+import { getAdminProfile, getMemberProfile, updateMemberProfile, changeAdminPassword, changeMemberPassword } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 const { Title, Text, Paragraph } = Typography;
@@ -27,8 +27,7 @@ const ProfilePage = () => {
             setLoading(true);
             setError(null);
             try {
-                const endpoint = isAdmin ? '/admin/profile' : '/member/profile';
-                const data = await api.get(endpoint);
+                const data = isAdmin ? await getAdminProfile() : await getMemberProfile();
                 setProfileData(data);
                 form.setFieldsValue({ fullName: data.fullName, email: data.email, admissionNumber: data.admissionNumber });
             } catch (err) {
@@ -46,7 +45,7 @@ const ProfilePage = () => {
         setSuccessMessage(null);
         try {
             if (!isAdmin && values.fullName !== profileData.fullName) {
-                await api.put('/member/profile/update', { fullName: values.fullName });
+                await updateMemberProfile(values.fullName);
                 setProfileData(prev => ({ ...prev, fullName: values.fullName }));
                 message.success('Profile updated successfully!');
             } else if (isAdmin) {
@@ -65,12 +64,11 @@ const ProfilePage = () => {
         setError(null);
         setSuccessMessage(null);
         try {
-            const endpoint = isAdmin ? '/admin/change-password' : '/member/profile/change-password';
-            const method = isAdmin ? 'post' : 'put';
-            const res = await api[method](endpoint, {
+            const payload = {
                 currentPassword: values.currentPassword,
                 newPassword: values.newPassword
-            });
+            };
+            const res = isAdmin ? await changeAdminPassword(payload) : await changeMemberPassword(payload);
             message.success(res.message || 'Password changed successfully!');
             passwordForm.resetFields();
         } catch (err) {

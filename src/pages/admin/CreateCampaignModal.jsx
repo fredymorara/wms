@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Typography, Form, Input, Select, DatePicker, Button, Spin, Alert, message } from 'antd';
-import { API_URL } from '../../services/api';
+import { createCampaign } from '../../services/api';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -12,30 +12,14 @@ const CreateCampaignModal = ({ visible, onCancel, onCreated }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    };
-
     const onFinish = async (values) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${API_URL}/admin/campaigns`, {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify({
-                    ...values,
-                    endDate: values.endDate.format('YYYY-MM-DD'),
-                }),
+            await createCampaign({
+                ...values,
+                endDate: values.endDate.format('YYYY-MM-DD'),
             });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Campaign creation failed');
-            }
             message.success({ content: 'Campaign created successfully', className: 'rounded-xl font-medium' });
             onCancel();
             if (onCreated) {

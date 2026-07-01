@@ -68,7 +68,7 @@ const FundsManagementPage = () => {
     };
 
     const renderCampaignStatus = (status, record) => {
-        let color = 'default';
+
         let text = typeof status === 'string' ? status : 'unknown';
         let tooltipText = null;
         let colorClass = 'bg-zinc-100 text-zinc-700'; // Default Tailwind
@@ -122,7 +122,7 @@ const FundsManagementPage = () => {
             width: 150,
             render: (_, record) => {
                 const percentage = record.goalAmount && record.goalAmount > 0 ? Math.min(Math.round((record.currentAmount / record.goalAmount) * 100), 100) : 0;
-                return <Progress percent={percentage || 0} size="small" status="active" strokeColor="#800000" trailColor="#f4f4f5" />;
+                return <Progress percent={percentage || 0} size="small" status="active" trailColor="#f4f4f5" />;
             }
         },
         { title: 'End Date', dataIndex: 'endDate', key: 'endDate', render: (date) => <span className="text-zinc-500">{date ? dayjs(date).format('DD MMM YYYY') : 'N/A'}</span> },

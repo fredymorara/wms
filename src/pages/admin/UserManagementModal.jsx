@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Typography, Table, Button, Spin, Alert, Space, message, Input } from 'antd';
-import { API_URL } from '../../services/api';
+import { getUsers, revokeUserAccess, grantUserAccess } from '../../services/api';
 import CreateUserModal from './CreateUserModal';
 import { SearchOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
 
@@ -16,29 +16,14 @@ const UserManagementModal = ({ visible, onCancel }) => {
     const [filteredUsers, setFilteredUsers] = useState([]);
     const searchInput = useRef(null);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    };
-
     const fetchUsers = async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${API_URL}/admin/users`, {
-                headers: getAuthHeaders()
-            });
-            const data = await response.json();
-            if (response.ok) {
-                const userList = data.data || data;
-                setUsers(userList);
-                setFilteredUsers(userList);
-            } else {
-                throw new Error(data.message || `HTTP error! status: ${response.status}`);
-            }
+            const data = await getUsers();
+            const userList = data.data || data;
+            setUsers(userList);
+            setFilteredUsers(userList);
         } catch (e) {
             setError(e.message);
         } finally {
@@ -69,14 +54,7 @@ const UserManagementModal = ({ visible, onCancel }) => {
     const handleRevokeAccess = async (userId) => {
         setActionLoading(true);
         try {
-            const response = await fetch(`${API_URL}/admin/users/${userId}/revoke`, {
-                method: 'POST',
-                headers: getAuthHeaders()
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to revoke user access');
-            }
+            await revokeUserAccess(userId);
             message.success({ content: 'User access revoked successfully', className: 'rounded-xl font-medium' });
             fetchUsers();
         } catch (e) {
@@ -90,14 +68,7 @@ const UserManagementModal = ({ visible, onCancel }) => {
     const handleGrantAccess = async (userId) => {
         setActionLoading(true);
         try {
-            const response = await fetch(`${API_URL}/admin/users/${userId}/grant`, {
-                method: 'POST',
-                headers: getAuthHeaders()
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to grant user access');
-            }
+            await grantUserAccess(userId);
             message.success({ content: 'User access granted successfully', className: 'rounded-xl font-medium' });
             fetchUsers();
         } catch (e) {

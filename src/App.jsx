@@ -1,8 +1,7 @@
 // App.js
 import React from 'react';
 import PrivateRoute from './components/PrivateRoute.jsx';
-import { Routes, Route } from 'react-router-dom'; // Remove BrowserRouter import
-// Default pages
+import { Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
@@ -23,7 +22,6 @@ import MemberDashboardPage from './pages/member/MemberDashboardPage.jsx';
 
 function App() {
   return (
-    // Remove the Router wrapping here - it's already in index.js
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -52,7 +50,6 @@ function App() {
       <Route path="/404" element={<NotFoundPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-    // No closing Router tag here anymore
   );
 }
 

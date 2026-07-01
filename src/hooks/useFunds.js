@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { message } from 'antd';
-import * as api from '../services/api';
+import { getAdminCampaigns, getCampaignContributors, getCampaignContributionHistory, initiateCampaignDisbursement } from '../services/api';
 
 export const useFunds = () => {
     const [campaignFundsData, setCampaignFundsData] = useState([]);
@@ -13,7 +13,7 @@ export const useFunds = () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await api.getAdminCampaigns(); // Assumes this gets the campaigns with fund info
+            const data = await getAdminCampaigns(); // Assumes this gets the campaigns with fund info
             setCampaignFundsData(Array.isArray(data) ? data : []);
             return data;
         } catch (err) {
@@ -29,7 +29,7 @@ export const useFunds = () => {
         setModalLoading(true);
         setError(null);
         try {
-            const data = await api.getCampaignContributors(campaignId);
+            const data = await getCampaignContributors(campaignId);
             return Array.isArray(data) ? data : [];
         } catch (err) {
             const errorMsg = err.message || 'Failed to load contributors';
@@ -45,7 +45,7 @@ export const useFunds = () => {
         setModalLoading(true);
         setError(null);
         try {
-            const data = await api.getCampaignContributionHistory(campaignId);
+            const data = await getCampaignContributionHistory(campaignId);
             return Array.isArray(data) ? data : [];
         } catch (err) {
             const errorMsg = err.message || 'Failed to load contribution history';
@@ -60,7 +60,7 @@ export const useFunds = () => {
     const disburseFunds = async (campaignId, disbursementData) => {
         setActionLoading(true);
         try {
-            const response = await api.initiateCampaignDisbursement(campaignId, disbursementData);
+            const response = await initiateCampaignDisbursement(campaignId, disbursementData);
             message.success(response.message || 'Disbursement initiated successfully!');
             await fetchCampaignFundsData(); // Refresh data
             return true;

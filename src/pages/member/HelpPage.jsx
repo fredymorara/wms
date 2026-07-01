@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, Alert, Typography } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import MemberLayout from '../../layout/MemberLayout';
-import api from '../../services/api';
+import { submitHelpInquiry } from '../../services/api';
 
 const { Title, Paragraph } = Typography;
 
@@ -17,7 +17,7 @@ function HelpPage() {
         setSuccessMessage('');
         setErrorMessage('');
         try {
-            await api.submitHelpInquiry(values);
+            await submitHelpInquiry(values);
             setSuccessMessage('Your inquiry has been submitted successfully!');
             form.resetFields();
         } catch (error) {

@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Alert, Typography, Spin, Progress, Statistic, Row, Col } from 'antd';
+import { Form, Input, Button, Alert, Typography, Spin, Progress, Statistic, Row, Col, message } from 'antd';
 import { PhoneOutlined, PayCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { initiateMpesaPayment, API_URL } from '../services/api'; 
+import { initiateMpesaPayment, getContributionStatus, API_URL } from '../services/api'; 
 
 const { Title, Text, Paragraph } = Typography;
 
 const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialAmount }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState('initial');
     const [transactionId, setTransactionId] = useState(null);
 
     const onFinish = async (values) => {
         setLoading(true);
-        setError(null);
-        setSuccessMessage(null);
         setPaymentStatus('pending');
         setTransactionId(null);
 
@@ -33,12 +29,9 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
             const response = await initiateMpesaPayment(paymentData);
             if (response.message === 'Payment initiated successfully') {
                 setTransactionId(response.data.checkoutRequestId);
-                startPolling(response.data.checkoutRequestId);
-                setSuccessMessage('Payment initiation successful! Please check your phone to complete the M-Pesa payment.');
                 form.resetFields();
             } else {
                 setPaymentStatus('failed');
-                setError(response.error || 'Payment initiation failed. Please try again.');
                 if (onPaymentError) {
                     onPaymentError(response.error || 'Payment initiation failed.');
                 }
@@ -46,7 +39,6 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
 
         } catch (error) {
             setPaymentStatus('failed');
-            setError(error.message || 'Payment initiation failed. Please check your network and try again.');
             if (onPaymentError) {
                 onPaymentError(error.message || 'Payment initiation failed.');
             }
@@ -55,56 +47,42 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
         }
     };
 
-    const pollInterval = 3000;
-    const timeoutDuration = 60000;
-    const startTime = Date.now();
-
-    const startPolling = (checkoutRequestId) => {
-        const intervalId = setInterval(async () => {
-            const elapsedTime = Date.now() - startTime;
-            if (elapsedTime > timeoutDuration) {
-                clearInterval(intervalId);
-                setPaymentStatus('cancelled');
-                setError('Payment verification timed out. Please check your M-Pesa and contribution history later.');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/contributions/status/${checkoutRequestId}?_t=${Date.now()}`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache'
-                    },
-                });
-
-                if (!response.ok) {
-                    return; 
-                }
-
-                const data = await response.json();
-
-                if (data.status === 'completed') {
-                    clearInterval(intervalId);
-                    setPaymentStatus('success');
-                    setSuccessMessage('Payment successful! Thank you for your contribution.');
-                    if (onPaymentSuccess) {
-                        onPaymentSuccess();
-                    }
-                } else if (data.status === 'failed' || data.status === 'refunded') {
-                    clearInterval(intervalId);
-                    setPaymentStatus('failed');
-                    setError('Payment failed or was cancelled. Please try again.');
-                }
-            } catch (error) {
-                // handle network errors silently
-            }
-        }, pollInterval);
-
-        return intervalId;
-    };
-
     useEffect(() => {
+        const pollInterval = 3000;
+        const timeoutDuration = 60000;
+        const startTime = Date.now();
+
+        const startPolling = (checkoutRequestId) => {
+            const intervalId = setInterval(async () => {
+                const elapsedTime = Date.now() - startTime;
+                if (elapsedTime > timeoutDuration) {
+                    clearInterval(intervalId);
+                    setPaymentStatus('cancelled');
+                    return;
+                }
+
+                try {
+                    const data = await getContributionStatus(checkoutRequestId);
+
+                    if (data.status === 'completed') {
+                        clearInterval(intervalId);
+                        setPaymentStatus('success');
+                        if (onPaymentSuccess) {
+                            onPaymentSuccess();
+                        }
+                    } else if (data.status === 'failed' || data.status === 'refunded') {
+                        clearInterval(intervalId);
+                        setPaymentStatus('failed');
+                    }
+                } catch (e) {
+                    console.error('Payment verification error:', e);
+                    message.error({ content: 'Failed to verify payment status', className: 'rounded-xl font-medium' });
+                }
+            }, pollInterval);
+
+            return intervalId;
+        };
+
         let intervalId;
         if (transactionId) {
             intervalId = startPolling(transactionId);
@@ -113,7 +91,7 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
-    }, [transactionId]);
+    }, [transactionId, onPaymentSuccess]);
     
     useEffect(() => {
         if (initialAmount) {
@@ -121,8 +99,8 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
         }
     }, [initialAmount, form]);
 
-    const onFinishFailed = (errorInfo) => {
-        setError('Form submission failed. Please check the fields.');
+    const onFinishFailed = () => {
+        message.error({ content: 'Please fill out all required fields correctly.', className: 'rounded-xl font-medium' });
     };
 
     const getPaymentStatusDisplay = () => {
@@ -169,7 +147,6 @@ const MpesaPaymentForm = ({ campaign, onPaymentSuccess, onPaymentError, initialA
     return (
         <div className="w-full">
             {getPaymentStatusDisplay()} 
-            {error && paymentStatus !== 'failed' && paymentStatus !== 'cancelled' && <Alert message={`Payment Error: ${error}`} type="error" className="rounded-xl mb-6" showIcon />} 
 
             {campaign && (
                 <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-6 mb-8">

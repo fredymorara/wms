@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layout/AdminLayout';
+import { getFundsOverview } from '../../services/api';
 import { Typography, Row, Col, Card, Statistic, Spin, Alert, Button } from 'antd';
 import {
     DashboardOutlined,
@@ -25,26 +26,12 @@ const AdminDashboard = () => {
     const [isManageUsersModalVisible, setIsManageUsersModalVisible] = useState(false);
     const navigate = useNavigate();
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    };
-
     useEffect(() => {
         const fetchDashboardData = async () => {
             setLoading(true);
             setError(null);
             try {
-                const response = await fetch(`${API_URL}/admin/dashboard-metrics`, {
-                    headers: getAuthHeaders()
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
+                const data = await getFundsOverview();
                 setDashboardMetrics(data);
             } catch (e) {
                 setError(e.message);

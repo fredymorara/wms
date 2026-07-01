@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Pagination, Col, Input, Button, Modal, Alert, Typography, Progress } from 'antd';
 import { SearchOutlined, CloseOutlined, HeartFilled } from '@ant-design/icons';
 import MemberLayout from '../../layout/MemberLayout';
-import api from '../../services/api';
+import { getActiveCampaigns } from '../../services/api';
 import MpesaPaymentForm from '../../components/MpesaPaymentForm';
 
 const { Title, Paragraph, Text } = Typography;
@@ -19,14 +19,9 @@ function CampaignsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(9);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-    };
-
     const fetchData = async () => {
         try {
-            const result = await api.getActiveCampaigns();
+            const result = await getActiveCampaigns();
             const data = result.data || result; // handle pagination object
             
             const formattedCampaigns = data.map(campaign => ({

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Progress, Button, Statistic, Alert, Typography, Modal, Form, Select, InputNumber } from 'antd';
 import { Link } from 'react-router-dom';
 import MemberLayout from '../../layout/MemberLayout';
-import api, { API_URL } from '../../services/api';
+import { getActiveCampaigns, getMyRecentActivity, API_URL } from '../../services/api';
 import MpesaPaymentForm from '../../components/MpesaPaymentForm';
 import MemberCampaignApplicationModal from '../../components/MemberCampaignApplicationModal';
 import { HeartFilled, RocketOutlined, NotificationOutlined, FormOutlined } from '@ant-design/icons';
@@ -22,16 +22,11 @@ const MemberDashboardPage = () => {
     const [isApplyModalVisible, setIsApplyModalVisible] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-    };
-
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const campaignsData = await api.getActiveCampaigns();
+                const campaignsData = await getActiveCampaigns();
                 const data = campaignsData.data || campaignsData;
                 setCampaigns(data.map(c => ({
                     id: c._id,
@@ -45,7 +40,7 @@ const MemberDashboardPage = () => {
                     details: c.details,
                 })));
 
-                const contributionsData = await api.getMyRecentActivity();
+                const contributionsData = await getMyRecentActivity();
                 const completedContributions = (contributionsData.data || contributionsData)
                     .filter(contribution => contribution.status === 'completed')
                     .map(c => ({

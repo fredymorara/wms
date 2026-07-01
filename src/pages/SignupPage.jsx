@@ -19,7 +19,7 @@ const SignupPage = () => {
                 throw new Error('The two passwords do not match!');
             }
 
-            const response = await register({
+            await register({
                 email: values.email,
                 password: values.password,
                 fullName: values.fullName,

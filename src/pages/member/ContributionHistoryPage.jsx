@@ -3,7 +3,7 @@ import { Input, Button, Alert, Typography, Pagination } from 'antd';
 import { SearchOutlined, CloseOutlined, CalendarOutlined, BankOutlined, CheckCircleFilled } from '@ant-design/icons';
 import moment from 'moment';
 import MemberLayout from '../../layout/MemberLayout';
-import api from '../../services/api';
+import { getMyContributionHistory } from '../../services/api';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -16,19 +16,11 @@ function ContributionHistoryPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        };
-    };
-
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await api.getMyContributionHistory();
+                const response = await getMyContributionHistory();
                 const data = response.data || response;
                 const completedContributions = data
                     .filter(contribution => contribution.status === 'completed')
@@ -70,11 +62,6 @@ function ContributionHistoryPage() {
             (contribution.mpesaCode && contribution.mpesaCode.toLowerCase().includes(value.toLowerCase()))
         );
         setFilteredContributions(filteredData);
-    };
-
-    const clearSearch = () => {
-        setSearchText('');
-        setFilteredContributions(contributions);
     };
 
     return (

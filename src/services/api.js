@@ -51,12 +51,20 @@ export const getMyContributionHistory = () => api.get('/member/my-contributions'
 export const getMyRecentActivity = () => api.get('/member/my-recent-activity');
 export const submitHelpInquiry = (inquiryData) => api.post('/member/inquiry', inquiryData);
 
-// Admin Dashboard & Reports
+// Admin Dashboard// Admin endpoints
+export const getAdminProfile = () => api.get('/admin/profile');
 export const getFundsOverview = () => api.get('/admin/dashboard-metrics');
 export const changeAdminPassword = (passwordData) => api.post('/admin/change-password', passwordData);
 
-// Admin Campaigns
+// Admin - Users
+export const getUsers = () => api.get('/admin/users');
+export const createUser = (userData) => api.post('/admin/users', userData);
+export const revokeUserAccess = (userId) => api.post(`/admin/users/${userId}/revoke`);
+export const grantUserAccess = (userId) => api.post(`/admin/users/${userId}/grant`);
+
+// Admin - Campaigns
 export const getAdminCampaigns = () => api.get('/admin/campaigns');
+export const createCampaign = (campaignData) => api.post('/admin/campaigns', campaignData);
 export const endCampaign = (campaignId) => api.post(`/admin/campaigns/${campaignId}/end`);
 export const approveCampaign = (campaignId) => api.post(`/admin/campaigns/${campaignId}/approve`);
 export const rejectCampaign = (campaignId, rejectionReason) => api.post(`/admin/campaigns/${campaignId}/reject`, { rejectionReason });
@@ -65,3 +73,9 @@ export const initiateCampaignDisbursement = (campaignId, disbursementData) => ap
 // Admin Funds
 export const getCampaignContributors = (campaignId) => api.get(`/admin/campaign-contributors/${campaignId}`);
 export const getCampaignContributionHistory = (campaignId) => api.get(`/admin/campaign-contribution-history/${campaignId}`);
+
+// Admin - Reports
+export const getGeneralContributionsReport = (params) => api.get('/admin/reports/general-contributions', { params, responseType: 'blob' });
+
+// Contributions
+export const getContributionStatus = (checkoutRequestId) => api.get(`/contributions/status/${checkoutRequestId}?_t=${Date.now()}`);

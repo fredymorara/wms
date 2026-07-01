@@ -11,7 +11,7 @@ import {
     message,
 } from 'antd';
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
-import { API_URL } from '../../services/api';
+import { getGeneralContributionsReport } from '../../services/api';
 
 const { Title, Paragraph, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -23,19 +23,10 @@ const ReportsPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    };
-
     const handleGenerateReport = async () => {
         setLoading(true);
         setError(null);
 
-        const apiUrl = `${API_URL}/admin/reports/general-contributions`;
         const reportParams = {
             startDate: dateRange ? dateRange[0].format('YYYY-MM-DD') : null,
             endDate: dateRange ? dateRange[1].format('YYYY-MM-DD') : null,
@@ -43,18 +34,8 @@ const ReportsPage = () => {
         };
 
         try {
-            const queryString = new URLSearchParams(reportParams).toString();
-            const fullApiUrl = `${apiUrl}?${queryString}`;
-            const response = await fetch(fullApiUrl, {
-                headers: getAuthHeaders()
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.blob();
+            const response = await getGeneralContributionsReport(reportParams);
+            const data = response; // blob is returned by axios directly is already a blob */
             const url = window.URL.createObjectURL(data);
             const link = document.createElement('a');
             link.href = url;

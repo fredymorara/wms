@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import { validateToken } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
         if (storedToken && storedUserData) {
             try {
                 // api instance automatically sends the Bearer token from localStorage
-                const response = await api.get('/auth/validate-token');
+                const response = await validateToken();
                 if (response.valid || response.user) {
                     setUser(storedUserData);
                     setToken(storedToken);

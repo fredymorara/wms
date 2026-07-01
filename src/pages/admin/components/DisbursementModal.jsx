@@ -88,7 +88,7 @@ const DisbursementModal = ({ visible, campaign, onCancel, onDisburse, loading, i
                         rules={[
                             { required: true, message: 'Amount is required!' },
                             { type: 'number', min: 1, message: 'Amount must be at least KES 1' },
-                            ({ getFieldValue }) => ({
+                            () => ({
                                 validator(_, value) {
                                     const available = campaign?.currentAmount || 0;
                                     if (!value || value <= available) {

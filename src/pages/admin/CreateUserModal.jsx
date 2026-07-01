@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Typography, Form, Input, Select, Button, Spin, Alert, message } from 'antd';
-import { API_URL } from '../../services/api';
+import { createUser } from '../../services/api';
 import { UserAddOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -11,27 +11,11 @@ const CreateUserModal = ({ visible, onCancel, onCreated }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    };
-
     const onFinish = async (values) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${API_URL}/admin/users`, {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify(values),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'User creation failed');
-            }
+            await createUser(values);
             message.success({ content: 'User created successfully', className: 'rounded-xl font-medium' });
             onCancel();
             if (onCreated) {
