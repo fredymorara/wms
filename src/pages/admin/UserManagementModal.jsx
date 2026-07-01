@@ -180,7 +180,7 @@ const UserManagementModal = ({ visible, onCancel }) => {
 
     return (
         <Modal
-            title={<Title level={4} className="!text-[#800000] !mb-0">User Management</Title>}
+            title={<Title level={4} className="text-[#800000]! mb-0!">User Management</Title>}
             visible={visible}
             onCancel={onCancel}
             footer={null}

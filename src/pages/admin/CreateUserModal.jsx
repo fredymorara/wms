@@ -58,7 +58,7 @@ const CreateUserModal = ({ visible, onCancel, onCreated }) => {
                     <div className="w-10 h-10 rounded-full bg-[#800000]/10 flex items-center justify-center">
                         <UserAddOutlined className="text-[#800000] text-xl" />
                     </div>
-                    <Title level={4} className="!text-[#800000] !mb-0">Create New User</Title>
+                    <Title level={4} className="text-[#800000]! mb-0!">Create New User</Title>
                 </div>
             }
             visible={visible}

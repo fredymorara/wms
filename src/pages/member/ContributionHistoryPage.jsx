@@ -3,7 +3,7 @@ import { Input, Button, Alert, Typography, Pagination } from 'antd';
 import { SearchOutlined, CloseOutlined, CalendarOutlined, BankOutlined, CheckCircleFilled } from '@ant-design/icons';
 import moment from 'moment';
 import MemberLayout from '../../layout/MemberLayout';
-import { API_URL } from '../../services/api';
+import api from '../../services/api';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -28,39 +28,31 @@ function ContributionHistoryPage() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`${API_URL}/member/my-contributions`, {
-                    headers: getAuthHeaders(),
-                });
+                const response = await api.getMyContributionHistory();
+                const data = response.data || response;
+                const completedContributions = data
+                    .filter(contribution => contribution.status === 'completed')
+                    .map(contribution => ({
+                        id: contribution._id,
+                        campaign: contribution.campaign?.title || 'Unknown Campaign',
+                        date: contribution.paymentDate || contribution.createdAt,
+                        amount: contribution.amount,
+                        paymentMethod: contribution.paymentMethod,
+                        mpesaCode: contribution.mpesaCode,
+                        transactionId: contribution.transactionId,
+                        status: contribution.status
+                    }));
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    if (response.status === 404 && errorData.message === "No contributions found for this user") {
-                        setContributions([]);
-                        setFilteredContributions([]);
-                        setError(null);
-                    } else {
-                        throw new Error(errorData.message || 'Failed to fetch contributions');
-                    }
-                } else {
-                    const data = await response.json();
-                    const completedContributions = data.data
-                        .filter(contribution => contribution.status === 'completed')
-                        .map(contribution => ({
-                            id: contribution._id,
-                            campaign: contribution.campaign?.title || 'Unknown Campaign',
-                            date: contribution.paymentDate || contribution.createdAt,
-                            amount: contribution.amount,
-                            paymentMethod: contribution.paymentMethod,
-                            mpesaCode: contribution.mpesaCode,
-                            transactionId: contribution.transactionId,
-                            status: contribution.status
-                        }));
-
-                    setContributions(completedContributions);
-                    setFilteredContributions(completedContributions);
-                }
+                setContributions(completedContributions);
+                setFilteredContributions(completedContributions);
             } catch (e) {
-                setError(e.message);
+                if (e.message && e.message.includes("No contributions found")) {
+                    setContributions([]);
+                    setFilteredContributions([]);
+                    setError(null);
+                } else {
+                    setError(e.message || 'Failed to fetch contributions');
+                }
             } finally {
                 setLoading(false);
             }
@@ -89,7 +81,7 @@ function ContributionHistoryPage() {
         <MemberLayout>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12">
                 <div className="text-center space-y-2 mb-8">
-                    <Title level={2} className="!text-[#800000] !mb-0">Contribution History</Title>
+                    <Title level={2} className="text-[#800000]! mb-0!">Contribution History</Title>
                     <Paragraph className="text-zinc-500 max-w-2xl mx-auto">
                         View and track all your completed contributions to active campaigns.
                     </Paragraph>
@@ -116,7 +108,7 @@ function ContributionHistoryPage() {
                 <div className="space-y-4">
                     {filteredContributions.length === 0 ? (
                         <div className="text-center py-16 bg-white border border-zinc-200 rounded-3xl">
-                            <Title level={4} className="!text-zinc-400">No contributions found</Title>
+                            <Title level={4} className="text-zinc-800!">No contributions found</Title>
                             <p className="text-zinc-500">
                                 {loading ? 'Loading your data...' : 'You have not made any completed contributions yet, or none match your search.'}
                             </p>

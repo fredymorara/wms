@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Progress, Button, Statistic, Alert, Typography, Modal, Form, Select, InputNumber } from 'antd';
 import { Link } from 'react-router-dom';
 import MemberLayout from '../../layout/MemberLayout';
-import { API_URL } from '../../services/api';
+import api, { API_URL } from '../../services/api';
 import MpesaPaymentForm from '../../components/MpesaPaymentForm';
 import MemberCampaignApplicationModal from '../../components/MemberCampaignApplicationModal';
 import { HeartFilled, RocketOutlined, NotificationOutlined, FormOutlined } from '@ant-design/icons';
@@ -31,37 +31,31 @@ const MemberDashboardPage = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const campaignsResponse = await fetch(`${API_URL}/member/campaigns`, { headers: getAuthHeaders() });
-                if (campaignsResponse.ok) {
-                    const campaignsData = await campaignsResponse.json();
-                    const data = campaignsData.data || campaignsData;
-                    setCampaigns(data.map(c => ({
-                        id: c._id,
-                        title: c.title,
-                        category: c.category,
-                        goal: c.goalAmount,
-                        raised: c.currentAmount,
-                        description: c.description,
-                        endDate: c.endDate,
-                        status: c.status,
-                        details: c.details,
-                    })));
-                }
+                const campaignsData = await api.getActiveCampaigns();
+                const data = campaignsData.data || campaignsData;
+                setCampaigns(data.map(c => ({
+                    id: c._id,
+                    title: c.title,
+                    category: c.category,
+                    goal: c.goalAmount,
+                    raised: c.currentAmount,
+                    description: c.description,
+                    endDate: c.endDate,
+                    status: c.status,
+                    details: c.details,
+                })));
 
-                const contributionsResponse = await fetch(`${API_URL}/member/my-recent-activity`, { headers: getAuthHeaders() });
-                if (contributionsResponse.ok) {
-                    const contributionsData = await contributionsResponse.json();
-                    const completedContributions = contributionsData.data
-                        .filter(contribution => contribution.status === 'completed')
-                        .map(c => ({
-                            id: c._id,
-                            description: `Contributed KES ${c.amount} to ${c.campaign?.title}`,
-                            date: c.paymentDate || c.createdAt || new Date().toISOString(),
-                            mpesaCode: c.mpesaCode,
-                            status: c.status
-                        }));
-                    setRecentActivity(completedContributions);
-                }
+                const contributionsData = await api.getMyRecentActivity();
+                const completedContributions = (contributionsData.data || contributionsData)
+                    .filter(contribution => contribution.status === 'completed')
+                    .map(c => ({
+                        id: c._id,
+                        description: `Contributed KES ${c.amount} to ${c.campaign?.title}`,
+                        date: c.paymentDate || c.createdAt || new Date().toISOString(),
+                        mpesaCode: c.mpesaCode,
+                        status: c.status
+                    }));
+                setRecentActivity(completedContributions);
             } catch (e) {
                 setError("Error loading data: " + e.message);
             }
@@ -95,7 +89,7 @@ const MemberDashboardPage = () => {
             <div className="max-w-7xl mx-auto space-y-8 pb-12">
                 {/* Header */}
                 <div className="text-center space-y-2 mb-12">
-                    <Title level={2} className="!text-[#800000] !mb-0">Student Dashboard</Title>
+                    <Title level={2} className="text-[#800000]! mb-0!">Student Dashboard</Title>
                     <Paragraph className="text-zinc-500">
                         Easily contribute to campaigns and view announcements.
                     </Paragraph>
@@ -124,7 +118,7 @@ const MemberDashboardPage = () => {
                         {/* Active Campaigns */}
                         <div>
                             <div className="flex justify-between items-center mb-6">
-                                <Title level={4} className="!text-zinc-800 !mb-0">Active Campaigns</Title>
+                                <Title level={4} className="text-zinc-800! mb-0!">Active Campaigns</Title>
                                 <Link to="/member/campaigns" className="text-[#800000] font-medium hover:underline">View All →</Link>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -251,7 +245,7 @@ const MemberDashboardPage = () => {
                         {/* Recent Activity */}
                         <div className="bg-white border border-zinc-200 rounded-3xl p-6">
                             <div className="flex justify-between items-center mb-6">
-                                <Title level={4} className="!text-zinc-800 !mb-0">Recent Activity</Title>
+                                <Title level={4} className="text-zinc-800! mb-0!">Recent Activity</Title>
                                 <Link to="/member/history" className="text-zinc-400 hover:text-[#800000] text-sm">View All</Link>
                             </div>
                             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
@@ -282,7 +276,7 @@ const MemberDashboardPage = () => {
 
                 {/* M-Pesa Payment Modal */}
                 <Modal
-                    title={<Title level={3} className="!text-[#800000] !mb-0 text-center">Contribution Form</Title>}
+                    title={<Title level={3} className="text-[#800000]! mb-0! text-center">Contribution Form</Title>}
                     visible={isModalVisible}
                     onCancel={() => setIsModalVisible(false)}
                     footer={null}

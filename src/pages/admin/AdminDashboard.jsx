@@ -61,7 +61,7 @@ const AdminDashboard = () => {
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header Section */}
                 <div className="text-center space-y-2">
-                    <Title level={2} className="!text-[#800000] !mb-0">Admin Dashboard</Title>
+                    <Title level={2} className="text-[#800000]! mb-0!">Admin Dashboard</Title>
                     <Paragraph className="text-zinc-500 max-w-2xl mx-auto">
                         Overview of the system, key metrics, and quick actions to manage welfare operations efficiently.
                     </Paragraph>
@@ -120,7 +120,7 @@ const AdminDashboard = () => {
                 {/* Quick Actions */}
                 <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-8 mt-12">
                     <div className="mb-6">
-                        <Title level={4} className="!text-[#800000] !mb-1">Quick Actions</Title>
+                        <Title level={4} className="text-[#800000]! mb-1!">Quick Actions</Title>
                         <Text className="text-zinc-500">Manage campaigns and users with one click.</Text>
                     </div>
                     
@@ -129,7 +129,7 @@ const AdminDashboard = () => {
                             className="group p-6 rounded-2xl border border-zinc-200 hover:border-[#800000] hover:bg-[#800000]/5 cursor-pointer transition-all flex items-start gap-4"
                             onClick={() => setIsCreateCampaignModalVisible(true)}
                         >
-                            <div className="w-12 h-12 rounded-full bg-[#800000]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-full bg-[#800000]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                                 <PlusOutlined className="text-[#800000] text-xl" />
                             </div>
                             <div>
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
                             className="group p-6 rounded-2xl border border-zinc-200 hover:border-[#800000] hover:bg-[#800000]/5 cursor-pointer transition-all flex items-start gap-4"
                             onClick={() => setIsManageUsersModalVisible(true)}
                         >
-                            <div className="w-12 h-12 rounded-full bg-[#800000]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-full bg-[#800000]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                                 <SettingOutlined className="text-[#800000] text-xl" />
                             </div>
                             <div>
@@ -155,7 +155,7 @@ const AdminDashboard = () => {
                             className="group p-6 rounded-2xl border border-zinc-200 hover:border-[#800000] hover:bg-[#800000]/5 cursor-pointer transition-all flex items-start gap-4"
                             onClick={() => navigate('/admin/campaigns?tab=pending')}
                         >
-                            <div className="w-12 h-12 rounded-full bg-[#800000]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-full bg-[#800000]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                                 <UnorderedListOutlined className="text-[#800000] text-xl" />
                             </div>
                             <div>

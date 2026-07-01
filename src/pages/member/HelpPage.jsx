@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, Alert, Typography } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import MemberLayout from '../../layout/MemberLayout';
-import { API_URL } from '../../services/api';
+import api from '../../services/api';
 
 const { Title, Paragraph } = Typography;
 
@@ -17,23 +17,11 @@ function HelpPage() {
         setSuccessMessage('');
         setErrorMessage('');
         try {
-            const response = await fetch(`${API_URL}/member/inquiry`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(values),
-            });
-
-            if (response.ok) {
-                setSuccessMessage('Your inquiry has been submitted successfully!');
-                form.resetFields();
-            } else {
-                const errorData = await response.json();
-                setErrorMessage(errorData.message || 'Failed to submit inquiry. Please try again.');
-            }
+            await api.submitHelpInquiry(values);
+            setSuccessMessage('Your inquiry has been submitted successfully!');
+            form.resetFields();
         } catch (error) {
-            setErrorMessage('An error occurred while submitting your inquiry.');
+            setErrorMessage(error.message || 'An error occurred while submitting your inquiry.');
         } finally {
             setLoading(false);
         }
@@ -43,7 +31,7 @@ function HelpPage() {
         <MemberLayout>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12">
                 <div className="text-center space-y-2 mb-12">
-                    <Title level={2} className="!text-[#800000] !mb-0">Need Help?</Title>
+                    <Title level={2} className="text-[#800000]! mb-0!">Need Help?</Title>
                     <Paragraph className="text-zinc-500 max-w-2xl mx-auto">
                         We're here to support you. Submit your inquiry below, and our team will get back to you as soon as possible.
                     </Paragraph>

@@ -109,7 +109,7 @@ const LandingPage = () => {
                                 Our administrative team is always ready to assist students in need. Submit a campaign request easily and get guidance throughout the approval process.
                             </p>
                         </div>
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                             <div className="w-32 h-32 rounded-full bg-zinc-50 flex items-center justify-center border-8 border-white shadow-xl">
                                 <HeartFilled className="text-4xl text-[#800000]" />
                             </div>
@@ -121,7 +121,7 @@ const LandingPage = () => {
             {/* CTA Section */}
             <section className="py-24 px-6">
                 <div className="max-w-5xl mx-auto bg-zinc-900 rounded-[3rem] p-12 text-center text-white relative overflow-hidden shadow-2xl mb-12">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#800000]/40 to-transparent opacity-50"></div>
+                    <div className="absolute inset-0 bg-linear-to-br from-[#800000]/40 to-transparent opacity-50"></div>
                     <div className="relative z-10 max-w-2xl mx-auto space-y-8">
                         <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Make a Difference Today</h2>
                         <p className="text-lg text-zinc-300">

@@ -231,7 +231,7 @@ const CampaignManagementPage = () => {
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
                     <div>
-                        <Title level={2} className="!text-[#800000] !mb-1">Campaigns Dashboard</Title>
+                        <Title level={2} className="text-[#800000]! mb-1!">Campaigns Dashboard</Title>
                         <Paragraph className="text-zinc-500 m-0">
                             Comprehensive overview and management of all welfare campaigns.
                         </Paragraph>
@@ -299,7 +299,7 @@ const CampaignManagementPage = () => {
                         {/* Pending Approvals Section (High Priority) */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
-                                <Title level={4} className="!text-zinc-800 !mb-0 flex items-center gap-2">
+                                <Title level={4} className="text-zinc-800! mb-0! flex items-center gap-2">
                                     Pending Approvals
                                     <span className="bg-zinc-100 text-zinc-600 text-xs py-0.5 px-2 rounded-full">{pendingCampaigns.length}</span>
                                 </Title>
@@ -328,7 +328,7 @@ const CampaignManagementPage = () => {
                         {/* Active Campaigns Section */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
-                                <Title level={4} className="!text-zinc-800 !mb-0 flex items-center gap-2">
+                                <Title level={4} className="text-zinc-800! mb-0! flex items-center gap-2">
                                     Active Campaigns
                                     <span className="bg-zinc-100 text-zinc-600 text-xs py-0.5 px-2 rounded-full">{activeCampaigns.length}</span>
                                 </Title>
@@ -349,7 +349,7 @@ const CampaignManagementPage = () => {
                         {/* Campaign Records Section */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
-                                <Title level={4} className="!text-zinc-800 !mb-0 flex items-center gap-2">
+                                <Title level={4} className="text-zinc-800! mb-0! flex items-center gap-2">
                                     Campaign Records
                                     <span className="bg-zinc-100 text-zinc-600 text-xs py-0.5 px-2 rounded-full">{campaignRecords.length}</span>
                                 </Title>

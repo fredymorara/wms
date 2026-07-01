@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Dropdown, Avatar, theme, Button, Typography } from 'antd';
+import { Layout, Menu, Dropdown, Avatar, Button, Typography } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import { MenuOutlined, CloseOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import logo from '../assets/Kabarak_University_Extended_logo_910x256.png';
@@ -13,15 +13,13 @@ const BaseRoleLayout = ({
     children,
     roleConfig: {
         menuItems,
-        apiEndpointPath,
-        showUserProfile = true
+        apiEndpointPath
     }
 }) => {
     const [user, setUser] = useState(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileView, setIsMobileView] = useState(false);
     const location = useLocation();
-    const { token: { borderRadiusLG } } = theme.useToken();
     const { logout } = useAuth();
 
     // Responsive view handling

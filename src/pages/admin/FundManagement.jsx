@@ -194,7 +194,7 @@ const FundsManagementPage = () => {
         <AdminLayout>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-12">
                 <div className="text-center space-y-2 mb-10">
-                    <Title level={2} className="!text-[#800000] !mb-0">Funds Management</Title>
+                    <Title level={2} className="text-[#800000]! mb-0!">Funds Management</Title>
                     <Paragraph className="text-zinc-500 max-w-2xl mx-auto">
                         Overview of campaign fundraising, manage disbursements, and track financial activity.
                     </Paragraph>
@@ -236,7 +236,7 @@ const FundsManagementPage = () => {
 
                 {/* Modals with matching styling */}
                 <Modal 
-                    title={<Title level={4} className="!text-[#800000] !mb-0">{selectedCampaign ? `Contributors to ${selectedCampaign.title}` : 'Contributors'}</Title>} 
+                    title={<Title level={4} className="text-[#800000]! mb-0!">{selectedCampaign ? `Contributors to ${selectedCampaign.title}` : 'Contributors'}</Title>} 
                     visible={isContributorsModalVisible} 
                     onCancel={() => setIsContributorsModalVisible(false)} 
                     footer={null} 
@@ -265,7 +265,7 @@ const FundsManagementPage = () => {
                 </Modal>
 
                 <Modal 
-                    title={<Title level={4} className="!text-[#800000] !mb-0">{selectedCampaign ? `Contribution History: ${selectedCampaign.title}` : 'Contribution History'}</Title>} 
+                    title={<Title level={4} className="text-[#800000]! mb-0!">{selectedCampaign ? `Contribution History: ${selectedCampaign.title}` : 'Contribution History'}</Title>} 
                     visible={isContributionHistoryModalVisible} 
                     onCancel={() => setIsContributionHistoryModalVisible(false)} 
                     footer={null} 

@@ -76,7 +76,7 @@ const ReportsPage = () => {
         <AdminLayout>
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-12">
                 <div className="text-center space-y-2 mb-10">
-                    <Title level={2} className="!text-[#800000] !mb-0">Reports Generator</Title>
+                    <Title level={2} className="text-[#800000]! mb-0!">Reports Generator</Title>
                     <Paragraph className="text-zinc-500 max-w-2xl mx-auto">
                         Generate and download detailed reports on system contributions and financial activities.
                     </Paragraph>

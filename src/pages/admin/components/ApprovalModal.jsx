@@ -22,7 +22,7 @@ const ApprovalModal = ({ visible, campaign, onCancel, onApprove, onReject, loadi
 
     return (
         <Modal
-            title={<Title level={4} className="!text-[#800000] !mb-0 text-center">Review Campaign Request</Title>}
+            title={<Title level={4} className="text-[#800000]! mb-0! text-center">Review Campaign Request</Title>}
             visible={visible}
             onCancel={onCancel}
             footer={null}

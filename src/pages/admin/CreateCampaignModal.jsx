@@ -57,7 +57,7 @@ const CreateCampaignModal = ({ visible, onCancel, onCreated }) => {
 
     return (
         <Modal
-            title={<Title level={4} className="!text-[#800000] !mb-0 text-center">Create New Campaign</Title>}
+            title={<Title level={4} className="text-[#800000]! mb-0! text-center">Create New Campaign</Title>}
             visible={visible}
             onCancel={onCancel}
             footer={null}

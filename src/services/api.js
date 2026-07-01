@@ -45,7 +45,11 @@ export const changeMemberPassword = (passwordData) => api.put('/member/profile/c
 
 // Member Campaigns & Funds
 export const getActiveCampaigns = () => api.get('/member/campaigns');
+export const applyForCampaign = (campaignData) => api.post('/member/campaigns/apply', campaignData);
 export const initiateMpesaPayment = (paymentData) => api.post('/member/mpesa-payment', paymentData);
+export const getMyContributionHistory = () => api.get('/member/my-contributions');
+export const getMyRecentActivity = () => api.get('/member/my-recent-activity');
+export const submitHelpInquiry = (inquiryData) => api.post('/member/inquiry', inquiryData);
 
 // Admin Dashboard & Reports
 export const getFundsOverview = () => api.get('/admin/dashboard-metrics');

@@ -94,7 +94,7 @@ const ProfilePage = () => {
         <LayoutComponent>
             <div className="max-w-4xl mx-auto space-y-8">
                 <div className="text-center space-y-2">
-                    <Title level={2} className="!text-[#800000] !mb-0">Profile Settings</Title>
+                    <Title level={2} className="text-[#800000]! mb-0!">Profile Settings</Title>
                     <Paragraph className="text-zinc-500">Manage your account information and security settings.</Paragraph>
                 </div>
 
@@ -112,7 +112,7 @@ const ProfilePage = () => {
                                 className="bg-zinc-100 text-[#800000] text-4xl shadow-inner"
                             />
                             <div>
-                                <Title level={4} className="!mb-1 !text-zinc-800">{profileData?.fullName}</Title>
+                                <Title level={4} className="mb-1! text-zinc-800!">{profileData?.fullName}</Title>
                                 <Text className="text-zinc-500 block">{isAdmin ? 'Administrator' : 'Student Member'}</Text>
                                 {!isAdmin && <Text className="text-zinc-400 text-sm block mt-1">{profileData?.admissionNumber}</Text>}
                             </div>
@@ -123,7 +123,7 @@ const ProfilePage = () => {
                     <div className="md:col-span-2 space-y-6">
                         {/* Personal Info Form */}
                         <div className="bg-white p-8 rounded-2xl border border-zinc-200 shadow-sm">
-                            <Title level={4} className="!text-zinc-800 !mb-6">Personal Information</Title>
+                            <Title level={4} className="text-zinc-800! mb-6!">Personal Information</Title>
                             <Form form={form} layout="vertical" onFinish={handleProfileUpdate}>
                                 <Form.Item label={<Text strong className="text-zinc-700">Full Name</Text>} name="fullName">
                                     <Input 
@@ -158,7 +158,7 @@ const ProfilePage = () => {
 
                         {/* Security Form */}
                         <div className="bg-white p-8 rounded-2xl border border-zinc-200 shadow-sm">
-                            <Title level={4} className="!text-zinc-800 !mb-6">Security</Title>
+                            <Title level={4} className="text-zinc-800! mb-6!">Security</Title>
                             <Form form={passwordForm} layout="vertical" onFinish={handlePasswordChange}>
                                 <Form.Item 
                                     label={<Text strong className="text-zinc-700">Current Password</Text>} 

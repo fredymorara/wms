@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Pagination, Col, Input, Button, Modal, Alert, Typography, Progress } from 'antd';
 import { SearchOutlined, CloseOutlined, HeartFilled } from '@ant-design/icons';
 import MemberLayout from '../../layout/MemberLayout';
-import { API_URL } from '../../services/api';
+import api from '../../services/api';
 import MpesaPaymentForm from '../../components/MpesaPaymentForm';
 
 const { Title, Paragraph, Text } = Typography;
@@ -26,8 +26,7 @@ function CampaignsPage() {
 
     const fetchData = async () => {
         try {
-            const response = await fetch(`${API_URL}/member/campaigns`, { headers: getAuthHeaders() });
-            const result = await response.json();
+            const result = await api.getActiveCampaigns();
             const data = result.data || result; // handle pagination object
             
             const formattedCampaigns = data.map(campaign => ({
@@ -103,7 +102,7 @@ function CampaignsPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-12">
                 {/* Header Section */}
                 <div className="text-center space-y-2 mb-8">
-                    <Title level={2} className="!text-[#800000] !mb-0">Active Campaigns</Title>
+                    <Title level={2} className="text-[#800000]! mb-0!">Active Campaigns</Title>
                     <Paragraph className="text-zinc-500 max-w-2xl mx-auto">
                         Browse active campaigns and contribute to causes you care about.
                     </Paragraph>
@@ -172,7 +171,7 @@ function CampaignsPage() {
                     ) : (
                         !loading && (
                             <div className="col-span-full text-center py-16 bg-white border border-zinc-200 rounded-3xl">
-                                <Title level={4} className="!text-zinc-400">No campaigns found</Title>
+                                <Title level={4} className="text-zinc-800!">No campaigns found</Title>
                                 <p className="text-zinc-500">Try adjusting your search criteria.</p>
                             </div>
                         )
@@ -196,7 +195,7 @@ function CampaignsPage() {
 
                 {/* Payment Modal */}
                 <Modal
-                    title={<Title level={3} className="!text-[#800000] !mb-0 text-center">Contribution Form</Title>}
+                    title={<Title level={3} className="text-[#800000]! mb-0! text-center">Contribution Form</Title>}
                     visible={isModalVisible}
                     onCancel={handleCancel}
                     footer={null}

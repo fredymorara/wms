@@ -6,7 +6,7 @@ const { Title, Paragraph, Text } = Typography;
 const CampaignDetailsModal = ({ visible, campaign, onCancel, isMobile }) => {
     return (
         <Modal
-            title={<Title level={4} className="!text-[#800000] !mb-0 text-center">Campaign Details</Title>}
+            title={<Title level={4} className="text-[#800000]! mb-0! text-center">Campaign Details</Title>}
             visible={visible}
             onCancel={onCancel}
             footer={null}
