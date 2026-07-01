@@ -45,7 +45,7 @@ const AdminDashboard = () => {
 
     return (
         <AdminLayout>
-            <div className="max-w-7xl mx-auto space-y-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
                 {/* Header Section */}
                 <div className="text-center space-y-2">
                     <Title level={2} className="text-[#800000]! mb-0!">Admin Dashboard</Title>

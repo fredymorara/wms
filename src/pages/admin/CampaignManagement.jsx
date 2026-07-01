@@ -236,7 +236,7 @@ const CampaignManagementPage = () => {
                             Comprehensive overview and management of all welfare campaigns.
                         </Paragraph>
                     </div>
-                    <Space size="middle" className="w-full md:w-auto">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                         <Input
                             placeholder="Search campaigns..."
                             onChange={(e) => setSearchText(e.target.value)}
@@ -249,11 +249,11 @@ const CampaignManagementPage = () => {
                             type="primary" 
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateCampaignModalVisible(true)} 
-                            className="bg-[#800000] hover:bg-[#600000] border-none font-bold h-11 px-6 rounded-xl shadow-md shadow-[#800000]/20 w-full md:w-auto"
+                            className="bg-[#800000] hover:bg-[#600000] border-none font-bold h-11 px-6 rounded-xl shadow-md shadow-[#800000]/20 w-full sm:w-auto"
                         >
                             Create Campaign
                         </Button>
-                    </Space>
+                    </div>
                 </div>
 
                 {loading && <div className="flex justify-center my-12"><Spin tip="Loading Dashboard Data..." size="large" /></div>}
