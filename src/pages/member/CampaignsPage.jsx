@@ -27,9 +27,9 @@ function CampaignsPage() {
     const fetchData = async () => {
         try {
             const response = await fetch(`${API_URL}/member/campaigns`, { headers: getAuthHeaders() });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-            const data = await response.json();
+            const result = await response.json();
+            const data = result.data || result; // handle pagination object
+            
             const formattedCampaigns = data.map(campaign => ({
                 id: campaign._id,
                 title: campaign.title,

@@ -12,7 +12,8 @@ export const useCampaigns = () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await api.getAdminCampaigns();
+            const result = await api.getAdminCampaigns();
+            const data = result.data || result; // handle paginated response object
             setCampaigns(data);
             return data;
         } catch (err) {

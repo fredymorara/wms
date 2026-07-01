@@ -31,12 +31,14 @@ const UserManagementModal = ({ visible, onCancel }) => {
             const response = await fetch(`${API_URL}/admin/users`, {
                 headers: getAuthHeaders()
             });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
             const data = await response.json();
-            setUsers(data);
-            setFilteredUsers(data);
+            if (response.ok) {
+                const userList = data.data || data;
+                setUsers(userList);
+                setFilteredUsers(userList);
+            } else {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            }
         } catch (e) {
             setError(e.message);
         } finally {

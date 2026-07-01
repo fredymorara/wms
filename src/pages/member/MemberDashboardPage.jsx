@@ -34,7 +34,8 @@ const MemberDashboardPage = () => {
                 const campaignsResponse = await fetch(`${API_URL}/member/campaigns`, { headers: getAuthHeaders() });
                 if (campaignsResponse.ok) {
                     const campaignsData = await campaignsResponse.json();
-                    setCampaigns(campaignsData.map(c => ({
+                    const data = campaignsData.data || campaignsData;
+                    setCampaigns(data.map(c => ({
                         id: c._id,
                         title: c.title,
                         category: c.category,
